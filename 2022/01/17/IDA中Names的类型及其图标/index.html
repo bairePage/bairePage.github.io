@@ -160,7 +160,7 @@ MathJax = {
       </div>
       <div class="markdown-body">
         <p>今天在群里有人问了个关于IDA的问题：</p>
-<p><img src="../images/image-20220117130818243.png" alt="类似的图片"></p>
+<p><img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117130818243.png" alt="类似的图片"></p>
 <blockquote>
 <p>Q：导出表中的D代表了什么</p>
 </blockquote>
@@ -178,31 +178,34 @@ MathJax = {
 <li>A (Ascii): ASCII string data that represents a string terminated with a null byte in the executable.</li>
 </ul>
 </blockquote>
-<p>由于该文章所介绍的IDA版本有些陈旧，在IDA HELP中找到了较新的解释</p>
-<p><img src="../images/image-20220117144409645.png" alt="IDA 7.5中HELP文档内容"></p>
+<p>由于该文章所介绍的IDA版本有些陈旧，在IDA HELP中找到了解释</p>
+<p><img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117144409645.png" alt="IDA 7.5中HELP文档内容"></p>
 <p>个人理解：</p>
 <ul>
 <li><p>图标为’f’的：方法。</p>
 <p>a.无底色F图标 ：普通方法</p>
-<p>​                 样式 :   <img src="../images/image-20220117145039129.png" alt="无底色F"></p>
+<p>​                 样式 :   <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117145039129.png" alt="无底色F"></p>
 </li>
 </ul>
 <p>​       b.浅蓝色F图标:    库方法(IDA识别,比如一些库静态编译进程序,IDA通过签名识别出)</p>
-<p>​                        样式 :   <img src="../images/image-20220117145449700.png" alt="浅蓝F"></p>
+<p>​                        样式 :   <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117145449700.png" alt="浅蓝F"></p>
 <p>​           c.紫色F图标 :    导入方法</p>
-<p>​                        样式 :    <img src="../images/image-20220117151103490.png" alt="紫色底色"></p>
+<p>​                        样式 :    <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117151103490.png" alt="紫色底色"></p>
 <p>​        </p>
 <p>[^颜色说明]: 后面的颜色规则均与这里一致：浅蓝色为IDA识别的库 无底色为常规，紫色为导入，不再复述</p>
 <ul>
 <li><p>图标为’i’的: 代码片段(未发现有C的图标,推测新版本用i表示instruction 有了解的欢迎<strong>勘误</strong>)</p>
 <p>a.无底色/浅蓝色 i 图标 : IDA识别的代码/库代码片段</p>
-<p>​                               样式 : <img src="../images/image-20220117155225931.png" alt="i图标"></p>
+<p>​                               样式 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117155225931-16424101764971.png" alt="i图标"></p>
 </li>
 <li><p>图标为’D’的 : 数据，在导出表中的数据一般为导出的全局变量</p>
-<p>a. D图标 : <img src="../images/image-20220117160017837.png" alt="D图标"></p>
+<p>a. D图标 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117160017837.png" alt="D图标"></p>
 </li>
-<li><p>图标为箭头的: External ,一般为导入的函数，name指向导入表内容</p>
-<p>a. 箭头图标 : <img src="../images/image-20220117160537218.png" alt="箭头图标"></p>
+<li><p>图标为箭头的: External ,一般为导入数据，name指向导入表内容</p>
+<p>a. 箭头图标 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117160537218.png" alt="箭头图标"></p>
+</li>
+<li><p>图标为’A’的：文本(IDA会在文本前面加一个a保证Name合规,IDA有相应的名称规范可以在官网看文档)</p>
+<p>a. ‘a’图标 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117170721058.png" alt="image-20220117170721058"></p>
 </li>
 </ul>
 <p>同时，我们可以看到有些Fuction被加粗了，这代表什么含义呢？</p>
@@ -211,7 +214,8 @@ MathJax = {
 <p>A bold font is used  for functions that have definite (user-specified) prototype. Also some plugins  too may set this flag. Such prototypes are taken as is by the decompiler, while  other prototypes are considered only as a starting point during decompilation</p>
 </blockquote>
 <p>IDA识别出了函数原型，可以用来反编译函数以及定位函数。</p>
-<p>可见IDA的文档给的还是比较全的，但也存在一些问题，比如7.5版本的help中没有解释’’箭头’’图标以及’i’图标，同时在样本中并没有看到图标为’C’的项,故推测’i’图标即HELP中的’C’。</p>
+<p>可见IDA的文档给的还是比较全的，但也存在一些问题，比如7.5版本的help中没有解释’’箭头’’图标以及’i’图标，同时在样本中并没有看到图标为’C’的项(故推测’i’图标即HELP中的’C’)。</p>
+<p>并且IDA HELP中所写的‘I’跟‘L’表示导入名与库函数，似乎在7.5版本内仅仅使用颜色去标注了。</p>
 <p>本人也去翻了几个版本的IDA更新文档，未看见相关说明，无奈文档内容过多且英语水平有限遂放弃继续查找。</p>
 <p>本篇文章基于IDA 7.5 分析windows样本，所写内容为个人之浅见，若有错误或建议欢迎联系，加以改正。</p>
 <p>联系方式见于’关于‘页面。</p>
