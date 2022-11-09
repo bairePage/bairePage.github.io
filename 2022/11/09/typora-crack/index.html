@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="DiamondHunters" />
+  <meta name="description" content="" />
+  
+  
+  <title>
+    
+      typora-crack 
+      
+      
+      |
+    
+     Dia的记事本
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcdn.net//ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+  <!---<script async src="//static.getclicky.com/101350277.js"></script>--->
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatarMe.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">Dia</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">typora-crack</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-11-09 17:13:46
+        </span>
+        
+      </div>
+      <div class="markdown-body">
+        <h3 id="Typora-破解思路"><a href="#Typora-破解思路" class="headerlink" title="Typora 破解思路"></a>Typora 破解思路</h3><p>互联网上公开的破解手段中，大多数都是采用对 Typora 加密的核心JS进行修改或Patch二进制实现绕过授权的，但这无疑会出现以下几种问题</p>
+<ul>
+<li>针对单个版本，无法做到通用补丁</li>
+<li>由于AES代码在 <code>main.node</code> 中，无法通用的hook密匙，需要手动获取AES密匙解密文件</li>
+<li>侵入性大，由于核心js长度硬编码在<code>main.node</code>中，调试与修改需要操作二进制程序</li>
+</ul>
+<p>针对以上几个痛点整理出以下几个需求</p>
+<ul>
+<li>尽量实现全版本兼容，且无需修改二进制程序以保证多平台可用</li>
+<li>能够优雅的处理激活过程，最好像正版一样使用</li>
+<li>无需修改入口及使用补丁，保证更新版本只需要 one click 激活</li>
+</ul>
+<p>俗话说，打蛇打七寸，去跟作者防护的JS做对抗如同撞豆腐也要找块冻豆腐，如何能四两拨千斤的点破罩门呢？</p>
+<p>针对传统软件的破解，我们常采用抓包/山寨服务器的方式修改验证包实现，但在逆向过程中发现Typora使用了非对称算法解密数据，导致不修改核心js就无法做到山寨数据，那么这条路就行不通了。</p>
+<p>真的行不通吗?</p>
+<p>在分析的过程中注意到Typora使用nodejs自带的<code>crypto.publicDecrypt()</code> </p>
+<p>是否可以hook nodejs 相关实现来修改数据呢？</p>
+<p>当然是可以的，Nodejs 本身是开源的，查看源码了解到算法最终实现是C++语言，分析二进制程序就能找到对应的实现位置进行hook，但这明显的违背了我们的“二进制无关”需求</p>
+<p>有没有什么其他办法对该函数进行hook呢</p>
+<p>进一步的来说，Nodejs 运行的 ECMAScript 本身就存在 hook 能力，若使用js对typora使用的<code>API</code>进行hook便可以满足二进制无关的需求，以此来以点破面。</p>
+<p>那么如何使用JS进行hook呢？首先需要一个能够让我们注入JS的方式，大有如下两种思路</p>
+<ul>
+<li>针对Nodejs的运行环境，注入并调用Node执行JS的函数插入我们的JS</li>
+<li>针对未加密的<code>node_modules</code>，将代码插入库的明文代码中</li>
+</ul>
+<p>显然就目前来讲第二种方式是比较省心的，但向node_modules的库中插入hook代码需要考虑几个问题</p>
+<ul>
+<li>被插入库的加载时机，加载晚于核心JS无法hook</li>
+<li>HOOK方式</li>
+</ul>
+<p>经过对核心JS的分析，发现<code>raven</code>这个库会在较早的时机被加载，所以可以将代码插入到该库的<code>index.js</code></p>
+<p>而HOOK方式经过尝试采用了对Modules原型重写，拦截require的方式HOOK Typora使用的库对象并进行修改</p>
+<p>明确以上两点后编写hook代码即可完成破解工作。</p>
+<p><img src="/2022/11/09/typora-crack/image-20221109183115299.png" alt="image-20221109183115299"></p>
+<p>在<code>Typora</code> require <code>Crypto</code>及<code>electron-fetch</code> 库的时候返回经过修改的对象</p>
+<p>修改后的<code>electron-fetch</code>对象根据请求链接返回mock的有效License结果</p>
+<p><img src="/2022/11/09/typora-crack/image-20221109183322462.png" alt="image-20221109183322462"></p>
+<p>修改后的<code>crypto</code>对象判断解密内容是否为mock内容来返回mock的解密license数据</p>
+<p><img src="/2022/11/09/typora-crack/image-20221109183344767.png" alt="image-20221109183344767"></p>
+<p>至此通过JS hook的方式实现了对验证流程的劫持，只要在输入激活码的地方输入能够满足typora本地判断的激活码即可进入网络验证流程并被hook代码返回正确的验证数据。</p>
+<p>插入hook js后重打包asar即可完成破解，使用代码生成的激活码进行激活。</p>
+<p>该方式只要验证逻辑不修改并存在注入点便持续可用，理论多版本兼容。</p>
+<p>代码地址：<a target="_blank" rel="noopener" href="https://github.com/DiamondHunters/NodeInject">https://github.com/DiamondHunters/NodeInject</a></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/04/29/2022-gamesec-final-wp/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-11-09 17:13:46
+            </span>
+            
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Typora-%E7%A0%B4%E8%A7%A3%E6%80%9D%E8%B7%AF"><span class="toc-text">Typora 破解思路</span></a></li></ol>
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+
+  <div id="vcomments"></div>
+
+  <script>
+    new Valine({
+      el: '#vcomments',
+      appId: 'bkevnbohTLs8IMTtlPQAE46E-gzGzoHsz',
+      appKey: 'WRvdsNxM9t5XI41zg0QrBmmX',
+      placeholder: '留个言吧~',
+      avatar: 'retro',
+      lang: 'zh'
+    })
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="Email" href="/about/">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="WeChat" href="/about/">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">Copyright © DiamondHunters 2022</a>
+        
+    </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + typora-crack + '&url=' + https%3A%2F%2Fbai.re%2F2022%2F11%2F09%2Ftypora-crack%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/2022/11/09/typora-crack/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

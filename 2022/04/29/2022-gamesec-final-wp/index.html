@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="DiamondHunters" />
+  <meta name="description" content="" />
+  
+  
+  <title>
+    
+      2022-游戏安全竞赛-安卓客户端方向WP 
+      
+      
+      |
+    
+     Dia的记事本
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcdn.net//ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+  <!---<script async src="//static.getclicky.com/101350277.js"></script>--->
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatarMe.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">Dia</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">2022-游戏安全竞赛-安卓客户端方向WP</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-04-29 11:47:33
+        </span>
+        
+      </div>
+      <div class="markdown-body">
+        <h3 id="APP启动外挂过程"><a href="#APP启动外挂过程" class="headerlink" title="APP启动外挂过程"></a>APP启动外挂过程</h3><p>首先打开apk,被<a target="_blank" rel="noopener" href="https://github.com/CodingGay/BlackObfuscator">BlackObfuscator</a>混淆过</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423111317272.png" alt="image-20220423111317272"></p>
+<p>这里可以提取代码执行一下获得switch路径,代码不是很多，结合CFG图直接动态分析了</p>
+<p>系统开启全局debuggable <code>magisk resetprop ro.debuggable 1 stop;start;</code></p>
+<p>使用 <code>am start -D -n &quot;com.tencent.esp/.MainActivity&quot;</code> 让app等待调试器</p>
+<p>ddms中开启method trace</p>
+<p>使用<code>jdb -connect com.sun.jdi.SocketAttach:hostname=127.0.0.1,port=8700</code>恢复代码执行</p>
+<h4 id="MainActivity-cinit"><a href="#MainActivity-cinit" class="headerlink" title="MainActivity cinit"></a>MainActivity cinit</h4><p>首先在主类的static块中加载了Putri的lib并初始化了一些值（这个库没用到？）</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423135251256.png" alt="image-20220423135251256"></p>
+<h4 id="MainActivity-onCreate"><a href="#MainActivity-onCreate" class="headerlink" title="MainActivity.onCreate"></a>MainActivity.onCreate</h4><p>根据调用顺序分析代码</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423135156667.png" alt="image-20220423135156667"></p>
+<p>736：</p>
+<p>读取配置文件，判断是否存在配置，不存在则写入</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423140209844.png" alt="image-20220423140209844"></p>
+<p>797：</p>
+<p>通过以下代码申请权限</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">this.requestPermissions(new String[]&#123;&quot;android.permission.ACCESS_COARSE_LOCATION&quot;, &quot;android.permission.ACCESS_FINE_LOCATION&quot;, &quot;android.permission.READ_EXTERNAL_STORAGE&quot;, &quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;&#125;, 102);</span><br></pre></td></tr></table></figure>
+
+<p>962：</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423140524569.png" alt="image-20220423140524569"></p>
+<p>获取root权限，获取文件路径</p>
+<p>1696：</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423140728929.png" alt="image-20220423140728929"></p>
+<p>检测APP能否绘制悬浮窗</p>
+<p>2001：</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423141203686.png" alt="image-20220423141203686"></p>
+<p>检查写入权限</p>
+<h4 id="MainActivity-onClick"><a href="#MainActivity-onClick" class="headerlink" title="MainActivity.onClick"></a>MainActivity.onClick</h4><p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423142112757.png" alt="image-20220423142112757"></p>
+<p>将<img src="/2022/04/29/2022-gamesec-final-wp/image-20220423143329010.png" alt="image-20220423143329010"></p>
+<p>sock1复制出来</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423143408334.png" alt="image-20220423143408334"></p>
+<p>并给予777权限</p>
+<p>调用 a 函数 </p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423143042125.png" alt="image-20220423143042125"></p>
+<p>向 /Android/data/.tyb 写入 DO NOT DELETE</p>
+<p>并将assert内几个文件复制出来（到app目录）</p>
+<p>对sock1文件进行解密</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423152304668.png" alt="image-20220423152304668"></p>
+<p>这两个函数不存在于这个类的源码中，是后加的</p>
+<p>看一下两个函数</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423152359744.png" alt="image-20220423152359744"></p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423152409083.png" alt="image-20220423152409083"></p>
+<p>256字节为一块进行解密，看得出来是RC4，</p>
+<p>h使用<code>gamesec</code>作为密匙初始化Sbox</p>
+<p>m进行加解密运算</p>
+<p>对sock1进行RC4运算获得一个elf文件</p>
+<p>然后</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423153146657.png" alt="image-20220423153146657"></p>
+<p>启动su向管道内写入命令启动刚才解密出的文件并启动服务</p>
+<p>这里的f被修改过</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423214540113.png" alt="image-20220423214540113"></p>
+<p>su运行的命令为<code>/data/data/com.tencent.esp/files/sock1 [x] [y]</code></p>
+<h3 id="APP绘制过程"><a href="#APP绘制过程" class="headerlink" title="APP绘制过程"></a>APP绘制过程</h3><h4 id="Overlay-onCreate"><a href="#Overlay-onCreate" class="headerlink" title="Overlay.onCreate"></a>Overlay.onCreate</h4><p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423153910855.png" alt="image-20220423153910855"></p>
+<p>该服务创建了一个悬浮窗并显示，同时创建了一个ESPView</p>
+<h4 id="EspView-cinit"><a href="#EspView-cinit" class="headerlink" title="EspView cinit"></a>EspView cinit</h4><p>初始化Paint用于绘制</p>
+<p>启动一个线程更新悬浮窗</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423154150425.png" alt="image-20220423154150425"></p>
+<p>线程内通过<img src="/2022/04/29/2022-gamesec-final-wp/image-20220423154611626.png" alt="image-20220423154611626"></p>
+<p>在指定间隔时间（或者超时后时间）调用<code>postInvalidate()</code>通知窗口重绘</p>
+<p>通过学习AndroidView更新流程知晓窗口重绘会调用onDraw方法</p>
+<h4 id="ESPView-onDraw"><a href="#ESPView-onDraw" class="headerlink" title="ESPView onDraw"></a>ESPView onDraw</h4><p>通过AS单步分析onDraw方法</p>
+<p>在onDraw内判断窗口是否可见然后通过</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">p0.drawColor(i, PorterDuff$Mode.CLEAR);</span><br></pre></td></tr></table></figure>
+
+<p>清空内容</p>
+<p>读取<code>/sdcard/1A.txt</code></p>
+<p>内容</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	&quot;cube&quot;: [&#123;</span><br><span class="line">		&quot;name&quot;: &quot;ThirdPersonCharacter&quot;,</span><br><span class="line">		&quot;x&quot;: 471.47,</span><br><span class="line">		&quot;y&quot;: 773.20</span><br><span class="line">	&#125;, &#123;</span><br><span class="line">		&quot;name&quot;: &quot;ThirdPersonCharacter2&quot;,</span><br><span class="line">		&quot;x&quot;: 471.47,</span><br><span class="line">		&quot;y&quot;: 773.20</span><br><span class="line">	&#125;, &#123;</span><br><span class="line">		&quot;name&quot;: &quot;ThirdPersonCharacter3&quot;,</span><br><span class="line">		&quot;x&quot;: 1486.88,</span><br><span class="line">		&quot;y&quot;: 667.73</span><br><span class="line">	&#125;]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>将name绘制在 (x,y上)</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423155908961.png" alt="image-20220423155908961"></p>
+<p>此处 a 为绘制文本方法</p>
+<p>DrawOn为Native方法（好像DrawOn没什么用）</p>
+<h3 id="二进制程序"><a href="#二进制程序" class="headerlink" title="二进制程序"></a>二进制程序</h3><h4 id="脱壳"><a href="#脱壳" class="headerlink" title="脱壳"></a>脱壳</h4><p>IDA打开发现存在壳，发现UE4!标记，怀疑是UPX,修复魔数<img src="/2022/04/29/2022-gamesec-final-wp/image-20220423161314552.png" alt="image-20220423161314552"></p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423161301519.png" alt="image-20220423161301519"></p>
+<p>同时发现结尾多余的hack字符，删掉</p>
+<p>此时<code>upx -d</code> 提示</p>
+<p> <code>CantUnpackException: ElfXX_Ehdr corrupted</code></p>
+<p>补齐ELF魔术头，从结尾找到<code>EC F9 04 00</code>修复上面的长度</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423180228333.png" alt="image-20220423180228333"></p>
+<p>还是旧提示</p>
+<p>换用upx devel分支修改代码编译执行</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423180510295.png" alt="image-20220423180510295"></p>
+<p>直接通过了。。</p>
+<p>这里有两个问题，一个是要用新版UPX 一个是要补好ELF魔术头跟被修改的长度数据</p>
+<h4 id="保护分析"><a href="#保护分析" class="headerlink" title="保护分析"></a>保护分析</h4><p>脱壳后可以执行，详细分析</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423191023582.png" alt="image-20220423191023582"></p>
+<p>此处进入主函数</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423191313857.png" alt="image-20220423191313857"></p>
+<p>OLLVM 寄</p>
+<p>通过OBPO还原控制流（OBPO的原理是修改ida微码，运行程序会改回微码）</p>
+<p>可以看到还是有文本xor加密存在，这里写了个脚本反混淆，将IDA生成的伪代码传入即可</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">def deObf(str):</span><br><span class="line">    find = re.findall(&#x27;byte_(\w+) \^= (\w+)u;&#x27;,str)</span><br><span class="line">    for group in find:</span><br><span class="line">        ea = int(group[0],16)</span><br><span class="line">        ch = ida_bytes.get_byte(ea)</span><br><span class="line">        ch = ch ^ int(group[1],16)</span><br><span class="line">        if ch != 0:</span><br><span class="line">            if(ch == &#x27;/&#x27;):</span><br><span class="line">                idc.set_name(ea,&quot;b_&quot; + hex(ea) + &quot;_xiegang&quot;)</span><br><span class="line">            elif(ch == &#x27;-&#x27;):</span><br><span class="line">                idc.set_name(ea,&quot;b_&quot; + hex(ea) + &quot;_henggang&quot;)</span><br><span class="line">            else:</span><br><span class="line">                idc.set_name(ea,&quot;b_&quot; + hex(ea) + &quot;_&quot; + chr(ch))</span><br><span class="line">        else:</span><br><span class="line">            idc.set_name(ea,&quot;b_&quot; + hex(ea) + &quot;_blank&quot;)</span><br></pre></td></tr></table></figure>
+
+<p>效果</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423200247795.png" alt="image-20220423200247795"></p>
+<p>main中申请了0xc8字节的空间存放动态获取的函数地址</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423212742009.png" alt="image-20220423212742009"></p>
+<p>使用刚才的脚本恢复一下名称，然后用以下脚本给结构体命名</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">import re</span><br><span class="line">def readAt(addr):</span><br><span class="line">    name = &#x27;&#x27;</span><br><span class="line">    while True:</span><br><span class="line">        find = re.findall(&#x27;b_0x.+_(.+)&#x27;,ida_name.get_name(addr))</span><br><span class="line">        if find == []:</span><br><span class="line">            break;</span><br><span class="line">        #print(find[0])</span><br><span class="line">        if find[0] == &#x27;blank&#x27;:</span><br><span class="line">            break;</span><br><span class="line">        else:</span><br><span class="line">            name += find[0][0];</span><br><span class="line">            addr += 1</span><br><span class="line">    return name</span><br><span class="line"></span><br><span class="line">def de(str):</span><br><span class="line">    struid = ida_struct.get_struc_id(&quot;struct_func_pointers&quot;)</span><br><span class="line">    find = re.findall(&#x27;v(.+) = .+.b_(\w+)_.+\n.+\n.+dword(.+) = v.+;&#x27;,str)</span><br><span class="line">    for group in find:</span><br><span class="line">        ea = int(group[1],16)</span><br><span class="line">        off = int(group[2],16)</span><br><span class="line">        set_member_name(struid,off,readAt(ea))</span><br><span class="line">        print(readAt(ea),hex(ea),hex(off))</span><br></pre></td></tr></table></figure>
+
+<p>效果如下</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423212914079.png" alt="image-20220423212914079"></p>
+<p>有几个没识别到，字符串解密的伪代码不同，这里下个断点依据文本直接补上（这里有个更简单的办法，不去静态解密，直接下断然后用idapyhton去读内存中解密好的值并且更加通用，绕路了）</p>
+<p>api偏移</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220423213947270.png" alt="image-20220423213947270"></p>
+<p>初始化指针表之后读取x y参数，在loop(0x26378)函数内使用pthread_create创建线程，失败则退出</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424023840989.png" alt="image-20220424023840989"></p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424024005055.png" alt="image-20220424024005055"></p>
+<p>线程所执行的函数为一个死循环，调用检测函数后休眠</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424024055944.png" alt="image-20220424024055944"></p>
+<p>检测函数被高强度控制流混淆以及代码膨胀，OBPO无法进行重建函数</p>
+<p>这里使用frida跟踪函数调用来辅助分析（脚本在附件，hook了指针表内所有函数）</p>
+<p>首先将创建线程替换成直接运行便于分析</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424024346486.png" alt="image-20220424024346486"></p>
+<h5 id="检测点1（0xe568）"><a href="#检测点1（0xe568）" class="headerlink" title="检测点1（0xe568）"></a>检测点1（0xe568）</h5><p>解密文本后执行 sub_27420</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424025303473.png" alt="image-20220424025303473"></p>
+<p>其中调用 popen函数执行<code>ls /proc/self/fd -all r</code>读取文件信息后pclose</p>
+<p>使用strstr检测返回文本其中是否存在 <code>frida</code>  <code>injector</code>字样</p>
+<p>存在则获取自己pid并kill</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424025042636.png" alt="image-20220424025042636"></p>
+<p>若kill后代码还在执行（防止直接hook kill？）则exit(1)</p>
+<h5 id="检测点2-（0x15820）"><a href="#检测点2-（0x15820）" class="headerlink" title="检测点2 （0x15820）"></a>检测点2 （0x15820）</h5><p>opendir 打开 <code>/data/local/tmp</code>目录（调用函数）</p>
+<p>readdir 获取目录下内容</p>
+<p>strcmp 与 <code>re.frida.server</code>进行比较 （也就是检测是否存在frida临时文件）</p>
+<p>存在则获取自己pid并kill</p>
+<p>若kill后代码还在执行（防止直接hook kill？）则exit(1)</p>
+<h5 id="检测点3-（0xd83c）"><a href="#检测点3-（0xd83c）" class="headerlink" title="检测点3 （0xd83c）"></a>检测点3 （0xd83c）</h5><p>这是一个信号反调试</p>
+<p>这个函数注册了SIGTRAP的信号处理程序，并申请了一块内存放入代码执行</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424034708991.png" alt="image-20220424034708991"></p>
+<p>代码只有8字节</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424033153660.png" alt="image-20220424033153660"></p>
+<p>BKPT指令产生一个软中断,程序收到SIGTRAP</p>
+<p>信号处理函数将501bc处数据解密并写入502ec</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424033607070.png" alt="image-20220424033607070"></p>
+<p>写入数据为</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424044658347.png" alt="image-20220424044658347"></p>
+<p>也就是把BKPT指令替换成了mov r0  ,#1</p>
+<p>此时返回值为1</p>
+<p>当返回值不为1时置检测不通过</p>
+<p>绕过:修改状态为已解密并将数据替换成信号处理函数内写入的数据</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424051832479.png" alt="image-20220424051832479"></p>
+<h5 id="检测点4-（0x16fcc）"><a href="#检测点4-（0x16fcc）" class="headerlink" title="检测点4 （0x16fcc）"></a>检测点4 （0x16fcc）</h5><p>读取/proc/self/task，其中tid文件大于2个就获取自己pid并kill</p>
+<p>若kill后代码还在执行则exit(1)</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424040015743.png" alt="image-20220424040015743"></p>
+<p>绕过：readdir返回0</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424051740887.png" alt="image-20220424051740887"></p>
+<h5 id="检测点5-（0x183c0）"><a href="#检测点5-（0x183c0）" class="headerlink" title="检测点5 （0x183c0）"></a>检测点5 （0x183c0）</h5><p>这个函数的代码膨胀量巨大，可以考虑trace排除掉无用部分，实际上这个函数没有什么逻辑，只有部分有用代码，配合frida分析可知</p>
+<p>该函数执行popen:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cat /proc/net/tcp |grep :5D8A</span><br><span class="line">cat /proc/net/tcp |grep :69A2</span><br></pre></td></tr></table></figure>
+
+<p>检测IDA,Frida默认端口号，并计算结果数目发现存在这两个端口则获取自己pid并kill</p>
+<p>若kill后代码还在执行则exit(1)</p>
+<p>绕过：修改程序内保存的Frida端口，IDA则用-p切换端口</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424055948547.png" alt="image-20220424055948547"></p>
+<p>至此主程序的5个检测函数分析完成</p>
+<h4 id="内部程序加载"><a href="#内部程序加载" class="headerlink" title="内部程序加载"></a>内部程序加载</h4><h5 id="内存加载sock流程"><a href="#内存加载sock流程" class="headerlink" title="内存加载sock流程"></a>内存加载sock流程</h5><p>首先申请0x1c000大小的内存并给予可执行权限</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424090547897.png" alt="image-20220424090547897"></p>
+<p>随后将申请到的空间及文件句柄传给 0x7cf0函数<img src="/2022/04/29/2022-gamesec-final-wp/image-20220424090945244.png" alt="image-20220424090945244"></p>
+<p>该函数中调用了0x67dc解密sock002文件</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424091125906.png" alt="image-20220424091125906"></p>
+<p>过程为将文件读入内存使用RC4进行解密</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424091220172.png" alt="image-20220424091220172"></p>
+<p>密匙为<code>TencentGameSecurity</code></p>
+<p>程序将几个部分解密后放在内存中并解析结构</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424092513495.png" alt="image-20220424092513495"></p>
+<p>判断解析的符号名是否为 <code>main1</code></p>
+<p>解析到main1后调用该函数</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424092642196.png" alt="image-20220424092642196"></p>
+<p>传入x,y及指针表作为参数</p>
+<p>至此外挂程序正式被调用</p>
+<h5 id="修复外挂ELF"><a href="#修复外挂ELF" class="headerlink" title="修复外挂ELF"></a>修复外挂ELF</h5><p>解密几个文件后发现可能是将sock001某些区段抽取后进行加密的</p>
+<p>根据对比正常ELF文件可知sock002为ProgramHeader</p>
+<p>从正常ELF文件中复制一份文件头并将002放在文件头后面</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424091625853.png" alt="image-20220424091625853"></p>
+<p>该头可以识别</p>
+<p>004+003长度符合001中一段空位，参照其他ELF将两个bin合并贴回ELF中</p>
+<p>005同样有空位，对比正常文件内容合理，贴之</p>
+<p>随后修复ELF头</p>
+<p>根据shstrtab找到节区所在位置0x1a48c</p>
+<p>并修改e_shoff<img src="/2022/04/29/2022-gamesec-final-wp/image-20220424092129326.png" alt="image-20220424092129326"></p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424092053989.png" alt="image-20220424092053989"></p>
+<p>根据文件长度减去e_shoff后除以节头大小40 得到节数量并写入ELF Header</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424092258588.png" alt="image-20220424092258588"></p>
+<p>至此elf可以被正常解析</p>
+<h5 id="外挂本体分析"><a href="#外挂本体分析" class="headerlink" title="外挂本体分析"></a>外挂本体分析</h5><h6 id="获取游戏PID"><a href="#获取游戏PID" class="headerlink" title="获取游戏PID"></a>获取游戏PID</h6><p>main1将a3参数保存到全局变量后调用<code>sub_8490</code>函数（传入 x y）</p>
+<p>sub_8490中调用<code>sub_6BF0</code>获取游戏进程ID</p>
+<p>该函数内有两种获取方法，第一种是使用popen运行</p>
+<p><code>pidof com.YourCompany.ThirdPerson</code></p>
+<p>若运行失败则打开 /proc 目录遍历子目录读取cmdline文件</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424100517617.png" alt="image-20220424100517617"></p>
+<p>寻找游戏进程，最终通过atoi返回数字pid</p>
+<h6 id="读取游戏libUE4-so基址"><a href="#读取游戏libUE4-so基址" class="headerlink" title="读取游戏libUE4.so基址"></a>读取游戏libUE4.so基址</h6><p>调用<code>sub_69c0</code>函数打开游戏进程<code>/proc/pid/maps</code>文件，<code>fgets</code>逐行读取，<code>strstr</code>查找<code>libUE4.so</code></p>
+<p>匹配到后使用strtoull取出基址</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424101524837.png" alt="image-20220424101524837"></p>
+<h6 id="读取内存方式"><a href="#读取内存方式" class="headerlink" title="读取内存方式"></a>读取内存方式</h6><p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424104430787.png" alt="image-20220424104430787"></p>
+<p>读取内存的函数有三种模式，通过rand生成随机数选择</p>
+<p><code>rand % 3  = 0</code> 时调用<code>process_vm_readv</code></p>
+<p><code>rand % 3  = 1</code> 时调用syscall 提供系统调用号调用 (376)<code>vm_readv</code>系统调用</p>
+<p><code>rand % 3  = 2</code> 时调用 sub_75F0()函数</p>
+<p>​        其中申请内存给予可执行权限并将base64编码的shellcode写入</p>
+<p>​        <code>DcCg4fAALekAcKDhAQCg4QIQoOEDIKDheACc6AAAAO/wAL3oHv8v4Q==</code></p>
+<p>​        然后将指向该shellcode的指针赋值给pointer表中的第13个</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424104911812.png" alt="image-20220424104911812"></p>
+<p>Shellcode Disassembly</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">0x0000000000000000:  0D C0 A0 E1    mov  ip, sp</span><br><span class="line">0x0000000000000004:  F0 00 2D E9    push &#123;r4, r5, r6, r7&#125;</span><br><span class="line">0x0000000000000008:  00 70 A0 E1    mov  r7, r0</span><br><span class="line">0x000000000000000c:  01 00 A0 E1    mov  r0, r1</span><br><span class="line">0x0000000000000010:  02 10 A0 E1    mov  r1, r2</span><br><span class="line">0x0000000000000014:  03 20 A0 E1    mov  r2, r3</span><br><span class="line">0x0000000000000018:  78 00 9C E8    ldm  ip, &#123;r3, r4, r5, r6&#125;</span><br><span class="line">0x000000000000001c:  00 00 00 EF    svc  #0</span><br><span class="line">0x0000000000000020:  F0 00 BD E8    pop  &#123;r4, r5, r6, r7&#125;</span><br><span class="line">0x0000000000000024:  1E FF 2F E1    bx   lr</span><br></pre></td></tr></table></figure>
+
+<p>可见这是使用svc指令产生0号中断，而零号中断代表系统调用</p>
+<p>此处通过直接中断调用<code>vm_readv</code>系统调用</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424105153173.png" alt="image-20220424105153173"></p>
+<p>解码shellcode函数返回后调用shellcode执行</p>
+<p>arm下的系统调用号<img src="/2022/04/29/2022-gamesec-final-wp/image-20220424113544243.png" alt="image-20220424113544243"></p>
+<h6 id="透视实现"><a href="#透视实现" class="headerlink" title="透视实现"></a>透视实现</h6><p>偏移总览：部分来源于SDK，部分为分析libUE4二进制文件及阅读源码获得</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">GWorld =  [libUE4.so + 0x491e6f0]</span><br><span class="line">GNames =  [libUE4.so + 0x48711B4]</span><br><span class="line">Level(PersistentLevel) = [GWorld + 32]</span><br><span class="line">Actors = [Level + 112]</span><br><span class="line">ActorsCount= Level + 116</span><br><span class="line">AcotorID = [Actors[i] + 16]</span><br><span class="line">FName = GNames[AcotorID/4000][(AcotorID%4000)*4]</span><br><span class="line">name = FName + 8</span><br><span class="line">RootComponent = [Actors[i] + 288]</span><br><span class="line">RelativeLocation = RootComponent + 256</span><br><span class="line">Player = [libue4Base + 0x4907EA0]</span><br><span class="line">PlayerController = [Player + 32]</span><br><span class="line">PlayerCameraManager = [PlayerController + 780]</span><br><span class="line">MinimalViewInfo = PlayerCameraManager + 800</span><br><span class="line">  | Vector Location                   + 800</span><br><span class="line">  |	Rotator Rotation                  + 812</span><br><span class="line">  |	float FOV                         + 824</span><br></pre></td></tr></table></figure>
+
+<p>该程序只有一个重要的函数<code>sub_8490</code>，该函数是一个死循环，大可分为两部分，写出数据文件以及从游戏中读取数据更新缓存</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424131240215.png" alt="image-20220424131240215"></p>
+<p>第一次进入此函数时会将几个基址读取出来</p>
+<h6 id="透视函数的第一部分：写出文件"><a href="#透视函数的第一部分：写出文件" class="headerlink" title="透视函数的第一部分：写出文件"></a>透视函数的第一部分：写出文件</h6><p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424132814755.png" alt="image-20220424132814755"></p>
+<p>内容比较简单，从v62所申请的内存区域读出角色名，屏幕上的x,y坐标并拼装成json写入文件，代码也没什么混淆不多介绍</p>
+<p>写出过程Frida记录</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424132954225.png" alt="image-20220424132954225"></p>
+<h6 id="透视函数的第二部分：读取数据计算屏幕坐标"><a href="#透视函数的第二部分：读取数据计算屏幕坐标" class="headerlink" title="透视函数的第二部分：读取数据计算屏幕坐标"></a>透视函数的第二部分：读取数据计算屏幕坐标</h6><p>比较重要的是第二部分</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424133128915.png" alt="image-20220424133128915"></p>
+<p>遍历Actor对象的ID，使用ActorID从GNames中读取到对应的FName，在FName + 8 的地址读出字符串(具体偏移在偏移总览中)</p>
+<p>判断名字是否符合一些条件，不符合则跳过</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424133652983.png" alt="image-20220424133652983"></p>
+<p>这里判断了是否为ThirdPersonCharacter4</p>
+<p>测试可知ThirdPersonCharacter4是玩家操控的角色</p>
+<p>这里判断有两个作用，一是不去绘制自己的名称，二十通过读取自己的组件获取了坐标（12字节向量但是好像没用？）</p>
+<p>之后判断都不是目标Character则跳过</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424135304784.png" alt="image-20220424135304784"></p>
+<p>如果是目标 Character</p>
+<p>首先读取相机的矩阵（个人理解是矩阵，实际上是一个）MinimalViewInfo 其中包含了相机的坐标，角度 FOV</p>
+<p>之后读取Actor组件，从组件读取 Character绝对位置</p>
+<p>将取得数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">	目标绝对坐标  Vector </span><br><span class="line">​	相机 Location </span><br><span class="line">​	相机 Rotation  (都在MinimalViewInfo中)</span><br><span class="line">​	屏幕宽，高</span><br></pre></td></tr></table></figure>
+
+<p>交给函数  <code>sub_7ed0</code> 处理</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424135757839.png" alt="image-20220424135757839"></p>
+<p>该函数中进行了一些坐标的转换以及图形学矩阵操作，最终算出目标在相机平面内的二维坐标</p>
+<p>（即已知相机坐标，摄像头角度，其他人坐标就可算出其他角色在2D屏幕上的显示坐标，由于游戏内存在遮挡关系， 自己获得坐标直接画上去就实现了透视效果）</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424140002279.png" alt="image-20220424140002279"></p>
+<p>将结果写在a1中</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424141056484.png" alt="image-20220424141056484"></p>
+<p>再次读取目标的绝对坐标，将数据写入进第一部分读取的内存区域，其中格式为</p>
+<p>名字字符串指针         4字节</p>
+<p>玩家绝对位置指针     4字节（没用到）</p>
+<p>float x                         4字节</p>
+<p>float y                         4字节</p>
+<p>16字节为一组</p>
+<p><img src="/2022/04/29/2022-gamesec-final-wp/image-20220424142315190.png" alt="image-20220424142315190"></p>
+<p>遍历完成后跳转至该函数第一部分，</p>
+<p>该函数第一部分读取此处写入的N组数据后写入文件，由APP读取文件并通过悬浮窗服务在屏幕的x,y位置上绘制名字文本。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-04-29 11:47:33
+            </span>
+            
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/11/09/typora-crack/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#APP%E5%90%AF%E5%8A%A8%E5%A4%96%E6%8C%82%E8%BF%87%E7%A8%8B"><span class="toc-text">APP启动外挂过程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#MainActivity-cinit"><span class="toc-text">MainActivity cinit</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MainActivity-onCreate"><span class="toc-text">MainActivity.onCreate</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MainActivity-onClick"><span class="toc-text">MainActivity.onClick</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#APP%E7%BB%98%E5%88%B6%E8%BF%87%E7%A8%8B"><span class="toc-text">APP绘制过程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Overlay-onCreate"><span class="toc-text">Overlay.onCreate</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#EspView-cinit"><span class="toc-text">EspView cinit</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ESPView-onDraw"><span class="toc-text">ESPView onDraw</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%A8%8B%E5%BA%8F"><span class="toc-text">二进制程序</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%84%B1%E5%A3%B3"><span class="toc-text">脱壳</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BF%9D%E6%8A%A4%E5%88%86%E6%9E%90"><span class="toc-text">保护分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A3%80%E6%B5%8B%E7%82%B91%EF%BC%880xe568%EF%BC%89"><span class="toc-text">检测点1（0xe568）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A3%80%E6%B5%8B%E7%82%B92-%EF%BC%880x15820%EF%BC%89"><span class="toc-text">检测点2 （0x15820）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A3%80%E6%B5%8B%E7%82%B93-%EF%BC%880xd83c%EF%BC%89"><span class="toc-text">检测点3 （0xd83c）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A3%80%E6%B5%8B%E7%82%B94-%EF%BC%880x16fcc%EF%BC%89"><span class="toc-text">检测点4 （0x16fcc）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%A3%80%E6%B5%8B%E7%82%B95-%EF%BC%880x183c0%EF%BC%89"><span class="toc-text">检测点5 （0x183c0）</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E9%83%A8%E7%A8%8B%E5%BA%8F%E5%8A%A0%E8%BD%BD"><span class="toc-text">内部程序加载</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%8A%A0%E8%BD%BDsock%E6%B5%81%E7%A8%8B"><span class="toc-text">内存加载sock流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D%E5%A4%96%E6%8C%82ELF"><span class="toc-text">修复外挂ELF</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%96%E6%8C%82%E6%9C%AC%E4%BD%93%E5%88%86%E6%9E%90"><span class="toc-text">外挂本体分析</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%B8%B8%E6%88%8FPID"><span class="toc-text">获取游戏PID</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96%E6%B8%B8%E6%88%8FlibUE4-so%E5%9F%BA%E5%9D%80"><span class="toc-text">读取游戏libUE4.so基址</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96%E5%86%85%E5%AD%98%E6%96%B9%E5%BC%8F"><span class="toc-text">读取内存方式</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%80%8F%E8%A7%86%E5%AE%9E%E7%8E%B0"><span class="toc-text">透视实现</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%80%8F%E8%A7%86%E5%87%BD%E6%95%B0%E7%9A%84%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E5%86%99%E5%87%BA%E6%96%87%E4%BB%B6"><span class="toc-text">透视函数的第一部分：写出文件</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E9%80%8F%E8%A7%86%E5%87%BD%E6%95%B0%E7%9A%84%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE%E8%AE%A1%E7%AE%97%E5%B1%8F%E5%B9%95%E5%9D%90%E6%A0%87"><span class="toc-text">透视函数的第二部分：读取数据计算屏幕坐标</span></a></li></ol></li></ol></li></ol></li></ol>
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+
+  <div id="vcomments"></div>
+
+  <script>
+    new Valine({
+      el: '#vcomments',
+      appId: 'bkevnbohTLs8IMTtlPQAE46E-gzGzoHsz',
+      appKey: 'WRvdsNxM9t5XI41zg0QrBmmX',
+      placeholder: '留个言吧~',
+      avatar: 'retro',
+      lang: 'zh'
+    })
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="Email" href="/about/">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="WeChat" href="/about/">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">Copyright © DiamondHunters 2022</a>
+        
+    </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + 2022-%E6%B8%B8%E6%88%8F%E5%AE%89%E5%85%A8%E7%AB%9E%E8%B5%9B-%E5%AE%89%E5%8D%93%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%B9%E5%90%91WP + '&url=' + https%3A%2F%2Fbai.re%2F2022%2F04%2F29%2F2022-gamesec-final-wp%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/2022/04/29/2022-gamesec-final-wp/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

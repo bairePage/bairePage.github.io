@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="DiamondHunters" />
+  <meta name="description" content="" />
+  
+  
+  <title>
+    
+      IDA中Names的类型及其图标 
+      
+      
+      |
+    
+     Dia的记事本
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcdn.net//ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+  <!---<script async src="//static.getclicky.com/101350277.js"></script>--->
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatarMe.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">Dia</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">IDA中Names的类型及其图标</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-01-17 12:25:14
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/%E5%9F%BA%E7%A1%80/" title="基础">
+                    <b>#</b> 基础
+                  </a>
+                </span>
+                
+                <span class="span--tag">
+                  <a href="/tags/IDA%E5%B0%8F%E7%9F%A5%E8%AF%86/" title="IDA小知识">
+                    <b>#</b> IDA小知识
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>今天在群里有人问了个关于IDA的问题：</p>
+<p><img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117130818243.png" alt="类似的图片"></p>
+<blockquote>
+<p>Q：导出表中的D代表了什么</p>
+</blockquote>
+<p>以我个人理解，这应该是导出的变量，但IDA标识的“D”代表了什么？</p>
+<p>一位大佬给出了答案，记录在此</p>
+<p><a target="_blank" rel="noopener" href="https://resources.infosecinstitute.com/topic/basics-of-ida-pro-2/">答案出处</a></p>
+<p>原文</p>
+<blockquote>
+<ul>
+<li>F (Function): regular function, which is not a library function.</li>
+<li>L (Library): library function that can be recognized with different signatures that are part of IDA. If the matching signature is not found, the name is labeled as a regular function.</li>
+<li>I (Imported): imported name from the shared library. The code from this function/name is not present in the executable and is provided at run time, whereas the library function is embedded into the executable.</li>
+<li>C (Code): named code that represent program locations that are not part of any function, which can happen if the name is a part of the symbol table, but the executable never calls this function.</li>
+<li>D (Data): named data locations that are usually global variables.</li>
+<li>A (Ascii): ASCII string data that represents a string terminated with a null byte in the executable.</li>
+</ul>
+</blockquote>
+<p>由于该文章所介绍的IDA版本有些陈旧，在IDA HELP中找到了解释</p>
+<p><img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117144409645.png" alt="IDA 7.5中HELP文档内容"></p>
+<p>个人理解：</p>
+<ul>
+<li><p>图标为’f’的：方法。</p>
+<p>a.无底色F图标 ：普通方法</p>
+<p>​                 样式 :   <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117145039129.png" alt="无底色F"></p>
+</li>
+</ul>
+<p>​       b.浅蓝色F图标:    库方法(IDA识别,比如一些库静态编译进程序,IDA通过签名识别出)</p>
+<p>​                        样式 :   <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117145449700.png" alt="浅蓝F"></p>
+<p>​           c.紫色F图标 :    导入方法</p>
+<p>​                        样式 :    <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117151103490.png" alt="紫色底色"></p>
+<p>​        </p>
+<p>[^颜色说明]: 后面的颜色规则均与这里一致：浅蓝色为IDA识别的库 无底色为常规，紫色为导入，不再复述</p>
+<ul>
+<li><p>图标为’i’的: 代码片段(未发现有C的图标,推测新版本用i表示instruction 有了解的欢迎<strong>勘误</strong>)</p>
+<p>a.无底色/浅蓝色 i 图标 : IDA识别的代码/库代码片段</p>
+<p>​                               样式 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117155225931-16424101764971.png" alt="i图标"></p>
+</li>
+<li><p>图标为’D’的 : 数据，在导出表中的数据一般为导出的全局变量</p>
+<p>a. D图标 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117160017837.png" alt="D图标"></p>
+</li>
+<li><p>图标为箭头的: External ,一般为导入数据，name指向导入表内容</p>
+<p>a. 箭头图标 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117160537218.png" alt="箭头图标"></p>
+</li>
+<li><p>图标为’A’的：文本(IDA会在文本前面加一个a保证Name合规,IDA有相应的名称规范可以在官网看文档)</p>
+<p>a. ‘a’图标 : <img src="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/image-20220117170721058.png" alt="image-20220117170721058"></p>
+</li>
+</ul>
+<p>同时，我们在上面紫色‘F’的图例看到有些Function被加粗了，这代表什么含义呢？</p>
+<p>在IDA Help中找到了如下解释：</p>
+<blockquote>
+<p>A bold font is used  for functions that have definite (user-specified) prototype. Also some plugins  too may set this flag. Such prototypes are taken as is by the decompiler, while  other prototypes are considered only as a starting point during decompilation</p>
+</blockquote>
+<p>IDA识别出了函数原型，可以用来反编译函数以及定位函数。</p>
+<p>可见IDA的文档给的还是比较全的，但也存在一些问题，比如7.5版本的help中没有解释’’箭头’’图标以及’i’图标，同时在样本中并没有看到图标为’C’的项(故推测’i’图标即HELP中的’C’)。</p>
+<p>并且IDA HELP中所写的‘I’跟‘L’表示导入名与库函数，似乎在7.5版本内仅仅使用颜色去标注了。</p>
+<p>本人也去翻了几个版本的IDA更新文档，未看见相关说明，无奈文档内容过多且英语水平有限遂放弃继续查找。</p>
+<p>本篇文章基于IDA 7.5 分析windows样本，所写内容为个人之浅见，若有错误或建议欢迎联系，加以改正。</p>
+<p>联系方式见于’关于‘页面。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/01/16/hello-world/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-01-17 12:25:14
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/%E5%9F%BA%E7%A1%80/" title="基础">
+                        <b>#</b> 基础
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/IDA%E5%B0%8F%E7%9F%A5%E8%AF%86/" title="IDA小知识">
+                        <b>#</b> IDA小知识
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/04/29/2022-gamesec-final-wp/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+
+  <div id="vcomments"></div>
+
+  <script>
+    new Valine({
+      el: '#vcomments',
+      appId: 'bkevnbohTLs8IMTtlPQAE46E-gzGzoHsz',
+      appKey: 'WRvdsNxM9t5XI41zg0QrBmmX',
+      placeholder: '留个言吧~',
+      avatar: 'retro',
+      lang: 'zh'
+    })
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="Email" href="/about/">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="WeChat" href="/about/">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">Copyright © DiamondHunters 2022</a>
+        
+    </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87 + '&url=' + https%3A%2F%2Fbai.re%2F2022%2F01%2F17%2FIDA%25E4%25B8%25ADNames%25E7%259A%2584%25E7%25B1%25BB%25E5%259E%258B%25E5%258F%258A%25E5%2585%25B6%25E5%259B%25BE%25E6%25A0%2587%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
