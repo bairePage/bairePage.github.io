@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="DiamondHunters" />
+  <meta name="description" content="" />
+  
+  
+  <title>
+    
+      使用AST还原某JS字符串混淆 
+      
+      
+      |
+    
+     Dia的记事本
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcdn.net//ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+  <!---<script async src="//static.getclicky.com/101350277.js"></script>--->
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatarMe.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">Dia</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.alicdn.com/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">使用AST还原某JS字符串混淆</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-11-18 19:31:55
+        </span>
+        
+      </div>
+      <div class="markdown-body">
+        <p>背景：</p>
+<p>在分析某站点接口时发现以前发现漏洞的JS修复后进行了强混淆，看起来十分抽象</p>
+<p><img src="/2022/11/18/deobf-str-by-ast/image-20221118194253741.png" alt="image-20221118194253741"></p>
+<p>于是乎搁置在一边没有继续分析，直到前几日在图书馆发现了小肩膀大佬写的爬虫混淆AST对抗，书中描述的几种混淆方式与该站点使用的十分相似，遂尝试使用AST对该JS进行一定程度的还原</p>
+<p>本篇针对该JS中的字符串混淆进行还原</p>
+<h3 id="字符串是如何混淆的"><a href="#字符串是如何混淆的" class="headerlink" title="字符串是如何混淆的"></a>字符串是如何混淆的</h3><h4 id="解密方式"><a href="#解密方式" class="headerlink" title="解密方式"></a>解密方式</h4><p>想要对字符串反混淆就要先分析该样本是如何对字符串进行混淆的</p>
+<p>以一个字符串的解密为例子，可以发现他将字符串解密拆分成一串函数调用并对立即数进行减法操作来防止通用解密</p>
+<p><img src="/2022/11/18/deobf-str-by-ast/image-20221118203212673.png" alt="image-20221118203212673"></p>
+<p>而处于全局作用域的<code>_0x1f1a68</code>实际上也是对另一个函数的调用</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_0x1f1a68</span>(<span class="params">_0x1be822, _0x79fd7, _0x340561, _0x170aa8, _0x35407a</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> _0x4903(_0x35407a - <span class="number">0x252</span>, _0x340561);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>经过在<code>VSCode</code>中对每个字符串解密函数查找定义，发现所有的字符串解密最终都是调用的<code>_0x4903</code></p>
+<p>由于每个函数的调用时机跟作用域都不同，获取每一个字符串解密函数的结果是不明智的</p>
+<p>于是这里需要实现的第一个功能就是将每一个字符串的解析还原成对<code>_0x4903</code>的调用，也就是将不同字符串解密函数的调用替换成对最根本的解密函数<code>_0x4903</code>的幂等形式</p>
+<h3 id="还原"><a href="#还原" class="headerlink" title="还原"></a>还原</h3><h4 id="函数调用还原实现"><a href="#函数调用还原实现" class="headerlink" title="函数调用还原实现"></a>函数调用还原实现</h4><p>举个例子</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_0x3cb10b</span>(<span class="params">_0x9056d3, _0xd6da67, _0x4e8aa3, _0x575cfa, _0x50067e</span>) </span>&#123;</span><br><span class="line">     <span class="keyword">return</span> _0x1f1a68(_0x9056d3 - <span class="number">0x1ca</span>, _0xd6da67 - <span class="number">0x97</span>, _0x4e8aa3, _0x575cfa - <span class="number">0x13c</span>, _0xd6da67 - <span class="number">0x119</span>);</span><br><span class="line"> &#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_0x362f86</span>(<span class="params">_0xeb8495, _0x2bb06b, _0x3bc6ce, _0x59c29b, _0x141499</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> _0x3cb10b(_0xeb8495 - <span class="number">0x1a0</span>, _0xeb8495 - -<span class="number">0x370</span>, _0x3bc6ce, _0x59c29b - <span class="number">0x19c</span>, _0x141499 - <span class="number">0x120</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_0x1f1a68</span>(<span class="params">_0x1be822, _0x79fd7, _0x340561, _0x170aa8, _0x35407a</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> _0x4903(_0x35407a - <span class="number">0x252</span>, _0x340561);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们的目标是将</p>
+<p><code>_0x362f86(0x9a3, 0xef2, &#39;1vkx&#39;, 0x369, 0xb40)</code></p>
+<p>转换成</p>
+<p><code>_0x3cb10b(0x9a3- 0x1a0, 0x9a3 - -0x370, &#39;1vkx&#39;, 0x369 - 0x19c, 0xb40 - 0x120);</code></p>
+<p>继而转换成</p>
+<p><code>_0x1f1a68(0x9a3- 0x1a0 - 0x1ca, 0x9a3 - -0x370 - 0x97, &#39;1vkx&#39;, 0x369 - 0x19c - 0x13c, 0x9a3 - -0x370 - 0x119);</code></p>
+<p>最终转换成</p>
+<p><code>_0x4903(0x9a3 - -0x370 - 0x119 - 0x252, &#39;1vkx&#39;);</code></p>
+<p><img src="/2022/11/18/deobf-str-by-ast/image-20221118211109561.png" alt="image-20221118211109561"></p>
+<p><img src="/2022/11/18/deobf-str-by-ast/image-20221118211121682.png" alt="image-20221118211121682"></p>
+<p>那么如何使用AST实现呢，为了尽可能实现上下文无关减少状态，这里采用像示例中的一样一层一层的处理</p>
+<p>在代码实现上我将其分为了多个部分</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">replaceArgsToIndex</span>(<span class="params">funcargs, arg</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (arg.type == <span class="string">&quot;BinaryExpression&quot;</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> replaceArgsToIndex(funcargs, arg.left);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (arg.name.startsWith(<span class="string">&quot;arg&quot;</span>)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; funcargs.length; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (funcargs[i].name == arg.name) &#123;</span><br><span class="line">                arg.name = <span class="string">&quot;arg&quot;</span> + i;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">&quot;not found arg &quot;</span> + arg.name + <span class="string">&quot; at &quot;</span> + arg.loc?.start.line);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第一步是将函数内的参数名转换成参数下标，这样就可以从<code>CallExpression</code>中直接用下标获取对应的参数进行表达式替换，这里处理了<code>BinaryExpression</code>是因为参数中存在减法表达式的情况，但变量永远在第一位，所以递归到最左面的变量再进行处理，同时如果参数已经被转化成argN的形式便不做处理。</p>
+<p>这里放一下关于二值表达式的表示</p>
+<p><img src="/2022/11/18/deobf-str-by-ast/image-20221120130744482.png" alt="image-20221120130744482"></p>
+<p>如图，每个红框都是一个二值表达式，外层的二值表达式将内层的二值表达式作为左值，所以当变量为</p>
+<p><code>xxx - 0x123 -0x456 -0x789</code></p>
+<p>形式时我们要递归的获取左值。</p>
+<p>转换后的形式为：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_0x1f1a68</span>(<span class="params">_0x1be822, _0x79fd7, _0x340561, _0x170aa8, _0x35407a</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> _0x4903(arg4 - <span class="number">0x252</span>, arg2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就可以检测所有对<code>0x1f1a68</code>的调用，获取其中的第5个参数和第三个参数并把其放入<code>_0x4903</code>调用的对应位置，然后将<code>0x1f1a68</code>替换为<code>_0x4903</code></p>
+<p>将参数下标替换成参数的代码如下</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">convertIndexToArg</span>(<span class="params">funcargs, arg</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (arg.type == <span class="string">&quot;BinaryExpression&quot;</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> btypes.binaryExpression(arg.operator, convertIndexToArg(funcargs, arg.left), arg.right);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (arg.name.startsWith(<span class="string">&quot;arg&quot;</span>)) &#123;</span><br><span class="line">            <span class="keyword">let</span> index = <span class="built_in">parseInt</span>(arg.name.substr(<span class="number">3</span>));</span><br><span class="line">            <span class="keyword">if</span> (index &lt; funcargs.length) &#123;</span><br><span class="line">                <span class="keyword">return</span> funcargs[index];</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="built_in">console</span>.log(<span class="string">&quot;not found arg index with name &quot;</span> + arg.name + <span class="string">&quot; at &quot;</span> + arg.loc?.start.line);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> arg;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>funcargs</code>为<code>CallExpression</code>中的参数,该函数同样递归处理二值表达式</p>
+<p>实现函数展开只需要遍历所有的函数定义，判断是否满足混淆函数的格式，然后通过binding寻找他的调用表达式进行处理，下面为代码实现</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> doFlatten = &#123;</span><br><span class="line">        <span class="function"><span class="title">FunctionDeclaration</span>(<span class="params">path</span>)</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> refBinding = path.scope.getBinding(path.node.id?.name);</span><br><span class="line">            <span class="keyword">if</span> (!refBinding.referenced) &#123;</span><br><span class="line">                path.remove(); <span class="comment">//如果函数没有被引用则直接删除并更新作用域</span></span><br><span class="line">                path.scope.crawl();</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (path.node.body.body.length != <span class="number">1</span>) <span class="keyword">return</span>;</span><br><span class="line">            <span class="keyword">let</span> body = path.node.body.body[<span class="number">0</span>];</span><br><span class="line">            <span class="keyword">if</span> (!btypes.isReturnStatement(body)) <span class="keyword">return</span>;</span><br><span class="line">            <span class="keyword">let</span> callExp = body.argument;</span><br><span class="line">            <span class="keyword">if</span> (!btypes.isCallExpression(callExp)) <span class="keyword">return</span>;</span><br><span class="line">            <span class="comment">//以上三个判断是否满足混淆函数的格式</span></span><br><span class="line">            <span class="keyword">let</span> calleeArgs = callExp.arguments; <span class="comment">//混淆函数里面调用函数的参数</span></span><br><span class="line">            <span class="keyword">let</span> funcArgs = path.node.params; <span class="comment">//混淆函数的参数</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">let</span> arg <span class="keyword">of</span> calleeArgs) &#123;</span><br><span class="line">                <span class="keyword">let</span> <span class="keyword">type</span> = arg.type;</span><br><span class="line">                <span class="keyword">switch</span> (arg.type) &#123;</span><br><span class="line">                    <span class="keyword">case</span> <span class="string">&quot;BinaryExpression&quot;</span>:</span><br><span class="line">                        replaceArgsToIndex(funcArgs, (arg <span class="keyword">as</span> btypes.BinaryExpression).left <span class="keyword">as</span> btypes.Identifier); <span class="comment">//这里可以不case,已经在replaceArgsToIndex中实现了递归，这里case是为了防止有未预期的形式，但是经过测试不存在该情况</span></span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    <span class="keyword">case</span> <span class="string">&quot;Identifier&quot;</span>:</span><br><span class="line">                        replaceArgsToIndex(funcArgs, arg <span class="keyword">as</span> btypes.Identifier);</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    <span class="keyword">default</span>:</span><br><span class="line">                        <span class="built_in">console</span>.log(<span class="string">&quot;callee arg not recognizable at line: &quot;</span> + path.node.loc?.start.line);</span><br><span class="line">                        <span class="keyword">return</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">let</span> &#123; id &#125; = path.node;</span><br><span class="line">            <span class="keyword">let</span> binding = path.scope.getBinding((id <span class="keyword">as</span> btypes.Identifier).name);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">let</span> refer_path <span class="keyword">of</span> binding!.referencePaths) &#123;</span><br><span class="line">                <span class="comment">//获取所有调用</span></span><br><span class="line">                <span class="keyword">if</span> (!btypes.isCallExpression(refer_path.parent)) &#123;</span><br><span class="line">                    <span class="built_in">console</span>.log(<span class="string">&quot;abnormal reference at line: &quot;</span> + refer_path.node.loc?.start.line);</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">let</span> args = (refer_path.parent <span class="keyword">as</span> btypes.CallExpression).arguments;</span><br><span class="line">                <span class="keyword">let</span> newArgs: btypes.Expression[] = []; <span class="comment">//重组的表调用参数</span></span><br><span class="line">                <span class="keyword">let</span> argExp: btypes.Expression;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">let</span> arg <span class="keyword">of</span> calleeArgs) &#123;</span><br><span class="line">                    <span class="keyword">let</span> <span class="keyword">type</span> = arg.type;</span><br><span class="line">                    <span class="keyword">switch</span> (arg.type) &#123;</span><br><span class="line">                        <span class="keyword">case</span> <span class="string">&quot;BinaryExpression&quot;</span>:</span><br><span class="line">                            argExp = convertIndexToArg(args, (arg <span class="keyword">as</span> btypes.BinaryExpression).left <span class="keyword">as</span> btypes.Identifier);</span><br><span class="line">                            <span class="keyword">let</span> exp = btypes.binaryExpression((arg <span class="keyword">as</span> btypes.BinaryExpression).operator, argExp, (arg <span class="keyword">as</span> btypes.BinaryExpression).right)</span><br><span class="line">                            newArgs.push(exp);</span><br><span class="line">                            <span class="comment">//处理重组，按照嵌套二值表达式的方式组装并把变量参数放在最左边</span></span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                        <span class="keyword">case</span> <span class="string">&quot;Identifier&quot;</span>:</span><br><span class="line">                            argExp = convertIndexToArg(args, arg <span class="keyword">as</span> btypes.Identifier);</span><br><span class="line">                            newArgs.push(argExp);</span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">let</span> newCallExp = btypes.callExpression(callExp.callee, newArgs);</span><br><span class="line">                refer_path.parentPath.replaceWith(newCallExp);<span class="comment">//替换callExpression</span></span><br><span class="line">            &#125;</span><br><span class="line">            path.parentPath.scope.crawl();</span><br><span class="line">            <span class="comment">//console.log(&quot;modified code: &quot; + codegen[&quot;default&quot;](path.node).code);</span></span><br><span class="line">            <span class="comment">//path.remove();</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    traverse[<span class="string">&quot;default&quot;</span>](root, doFlatten);</span><br></pre></td></tr></table></figure>
+
+<p>由于每次我们仅处理一层，所以这里多次处理，这样就不必为先后顺序发愁</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> level = <span class="number">0</span>; level &lt; <span class="number">3</span>; level++) &#123;</span><br><span class="line">  removeConstFunc(root)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="字符串函数调用"><a href="#字符串函数调用" class="headerlink" title="字符串函数调用"></a>字符串函数调用</h4><p>上一步中我们将字符串混淆替换成了形似<code>_0x4903(0x9a3 - -0x370 - 0x119 - 0x252, &#39;1vkx&#39;);</code>的调用，这一步中我们要将对该函数的调用还原为字符串。</p>
+<p>以下为<code>_0x4903</code>的实现</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_0x4903</span>(<span class="params">_0x41f1e9, _0x3130bc</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> _0x5e7ec4 = _0x8976();</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">return</span> _0x4903 = <span class="function"><span class="keyword">function</span> (<span class="params">_0x899a2d, _0x5835f7</span>) </span>&#123;</span><br><span class="line">      _0x899a2d = _0x899a2d - <span class="number">109</span>;</span><br><span class="line">      <span class="keyword">var</span> _0x3e8c46 = _0x5e7ec4[_0x899a2d];</span><br><span class="line">  </span><br><span class="line">      <span class="keyword">if</span> (_0x4903.HfpBsi === <span class="literal">undefined</span>) &#123;</span><br><span class="line">        <span class="keyword">var</span> _0x1cbb5e = <span class="function"><span class="keyword">function</span> (<span class="params">_0x50d26d</span>) </span>&#123;</span><br><span class="line">          <span class="keyword">var</span> _0x5a42a9 = <span class="string">&#x27;&#x27;</span>,</span><br><span class="line">              _0x12cc8d = <span class="string">&#x27;&#x27;</span>,</span><br><span class="line">              _0x5f42a1 = _0x5a42a9 + _0x1cbb5e;</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">for</span> (<span class="keyword">var</span> _0x2829d6 = <span class="number">0</span>, _0x49459b, _0x390f91, _0x46a986 = <span class="number">0</span>; _0x390f91 = _0x50d26d.charAt(_0x46a986++); ~_0x390f91 &amp;&amp; (_0x49459b = _0x2829d6 % <span class="number">4</span> ? _0x49459b * <span class="number">64</span> + _0x390f91 : _0x390f91, _0x2829d6++ % <span class="number">4</span>) ? _0x5a42a9 += _0x5f42a1.charCodeAt(_0x46a986 + <span class="number">10</span>) - <span class="number">10</span> !== <span class="number">0</span> ? <span class="built_in">String</span>.fromCharCode(<span class="number">255</span> &amp; _0x49459b &gt;&gt; (-<span class="number">2</span> * _0x2829d6 &amp; <span class="number">6</span>)) : _0x2829d6 : <span class="number">0</span>) &#123;</span><br><span class="line">            _0x390f91 = <span class="string">&#x27;abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=&#x27;</span>.indexOf(_0x390f91);</span><br><span class="line">          &#125;</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">for</span> (<span class="keyword">var</span> _0x42631c = <span class="number">0</span>, _0x4ab4be = _0x5a42a9.length; _0x42631c &lt; _0x4ab4be; _0x42631c++) &#123;</span><br><span class="line">            _0x12cc8d += <span class="string">&#x27;%&#x27;</span> + (<span class="string">&#x27;00&#x27;</span> + _0x5a42a9.charCodeAt(_0x42631c).toString(<span class="number">16</span>)).slice(-<span class="number">2</span>);</span><br><span class="line">          &#125;</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">return</span> <span class="built_in">decodeURIComponent</span>(_0x12cc8d);</span><br><span class="line">        &#125;;</span><br><span class="line">  </span><br><span class="line">        <span class="keyword">var</span> _0x6b448 = <span class="function"><span class="keyword">function</span> (<span class="params">_0x1b5efd, _0x1ba8dd</span>) </span>&#123;</span><br><span class="line">          <span class="keyword">var</span> _0x45d44d = [],</span><br><span class="line">              _0xd3ad3a = <span class="number">0</span>,</span><br><span class="line">              _0x1e5c57,</span><br><span class="line">              _0x567392 = <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">  </span><br><span class="line">          _0x1b5efd = _0x1cbb5e(_0x1b5efd);</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">var</span> _0x579ae7;</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">for</span> (_0x579ae7 = <span class="number">0</span>; _0x579ae7 &lt; <span class="number">256</span>; _0x579ae7++) &#123;</span><br><span class="line">            _0x45d44d[_0x579ae7] = _0x579ae7;</span><br><span class="line">          &#125;</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">for</span> (_0x579ae7 = <span class="number">0</span>; _0x579ae7 &lt; <span class="number">256</span>; _0x579ae7++) &#123;</span><br><span class="line">            _0xd3ad3a = (_0xd3ad3a + _0x45d44d[_0x579ae7] + _0x1ba8dd.charCodeAt(_0x579ae7 % _0x1ba8dd.length)) % <span class="number">256</span>, _0x1e5c57 = _0x45d44d[_0x579ae7], _0x45d44d[_0x579ae7] = _0x45d44d[_0xd3ad3a], _0x45d44d[_0xd3ad3a] = _0x1e5c57;</span><br><span class="line">          &#125;</span><br><span class="line">  </span><br><span class="line">          _0x579ae7 = <span class="number">0</span>, _0xd3ad3a = <span class="number">0</span>;</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">for</span> (<span class="keyword">var</span> _0x577b0d = <span class="number">0</span>; _0x577b0d &lt; _0x1b5efd.length; _0x577b0d++) &#123;</span><br><span class="line">            _0x579ae7 = (_0x579ae7 + <span class="number">1</span>) % <span class="number">256</span>, _0xd3ad3a = (_0xd3ad3a + _0x45d44d[_0x579ae7]) % <span class="number">256</span>, _0x1e5c57 = _0x45d44d[_0x579ae7], _0x45d44d[_0x579ae7] = _0x45d44d[_0xd3ad3a], _0x45d44d[_0xd3ad3a] = _0x1e5c57, _0x567392 += <span class="built_in">String</span>.fromCharCode(_0x1b5efd.charCodeAt(_0x577b0d) ^ _0x45d44d[(_0x45d44d[_0x579ae7] + _0x45d44d[_0xd3ad3a]) % <span class="number">256</span>]);</span><br><span class="line">          &#125;</span><br><span class="line">  </span><br><span class="line">          <span class="keyword">return</span> _0x567392;</span><br><span class="line">        &#125;;</span><br><span class="line">  </span><br><span class="line">        _0x4903.MMnWus = _0x6b448, _0x41f1e9 = <span class="built_in">arguments</span>, _0x4903.HfpBsi = !![];</span><br><span class="line">      &#125;</span><br><span class="line">  </span><br><span class="line">      <span class="keyword">var</span> _0x22abc4 = _0x5e7ec4[<span class="number">0</span>],</span><br><span class="line">          _0x244987 = _0x899a2d + _0x22abc4,</span><br><span class="line">          _0x238d8e = _0x41f1e9[_0x244987];</span><br><span class="line">  </span><br><span class="line">      <span class="keyword">if</span> (!_0x238d8e) &#123;</span><br><span class="line">        <span class="keyword">if</span> (_0x4903.CBAcVv === <span class="literal">undefined</span>) &#123;</span><br><span class="line">          <span class="keyword">var</span> _0xdfbdcc = <span class="function"><span class="keyword">function</span> (<span class="params">_0xacf633</span>) </span>&#123;</span><br><span class="line">            <span class="built_in">this</span>.kDnxVr = _0xacf633, <span class="built_in">this</span>.IoBPQs = [<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>], <span class="built_in">this</span>.wpMLDB = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;<span class="keyword">return</span> <span class="string">&#x27;newState&#x27;</span>;&#125;, <span class="built_in">this</span>.kJPlqW = <span class="string">&#x27;\x5cw+\x20*\x5c(\x5c)\x20*&#123;\x5cw+\x20*&#x27;</span>, <span class="built_in">this</span>.YBMSQk = <span class="string">&#x27;[\x27|\x22].+[\x27|\x22];?\x20*&#125;&#x27;</span>; <span class="comment">//这是正则表达式</span></span><br><span class="line">          &#125;;</span><br><span class="line">  </span><br><span class="line">          _0xdfbdcc.prototype.NgtXeG = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">            <span class="keyword">var</span> _0x18c3d0 = <span class="keyword">new</span> <span class="built_in">RegExp</span>(<span class="built_in">this</span>.kJPlqW + <span class="built_in">this</span>.YBMSQk),</span><br><span class="line">                _0xa664a8 = _0x18c3d0.test(<span class="built_in">this</span>.wpMLDB.toString()) ? --<span class="built_in">this</span>.IoBPQs[<span class="number">1</span>] : --<span class="built_in">this</span>.IoBPQs[<span class="number">0</span>]; <span class="comment">//这里检测函数文本是否满足正则，实际上是检测JS有没有被格式化，在这里将wpMLDB手动的改回了最小化的格式绕过检测</span></span><br><span class="line">  </span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">this</span>.vbKnou(_0xa664a8); </span><br><span class="line">          &#125;, _0xdfbdcc.prototype.vbKnou = <span class="function"><span class="keyword">function</span> (<span class="params">_0x561c7b</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (!<span class="built_in">Boolean</span>(~_0x561c7b)) <span class="keyword">return</span> _0x561c7b;</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">this</span>.DtzlIA(<span class="built_in">this</span>.kDnxVr); <span class="comment">//检测到被格式化，调用该函数溢满内存</span></span><br><span class="line">          &#125;, _0xdfbdcc.prototype.DtzlIA = <span class="function"><span class="keyword">function</span> (<span class="params">_0x386581</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">var</span> _0x2adaa0 = <span class="number">0</span>, _0x5245a5 = <span class="built_in">this</span>.IoBPQs.length; _0x2adaa0 &lt; _0x5245a5; _0x2adaa0++) &#123;</span><br><span class="line">              <span class="built_in">this</span>.IoBPQs.push(<span class="built_in">Math</span>.round(<span class="built_in">Math</span>.random())), _0x5245a5 = <span class="built_in">this</span>.IoBPQs.length;</span><br><span class="line">            &#125;</span><br><span class="line">  </span><br><span class="line">            <span class="keyword">return</span> _0x386581(<span class="built_in">this</span>.IoBPQs[<span class="number">0</span>]);</span><br><span class="line">          &#125;, <span class="keyword">new</span> _0xdfbdcc(_0x4903).NgtXeG(), _0x4903.CBAcVv = !![];</span><br><span class="line">        &#125;</span><br><span class="line">  </span><br><span class="line">        _0x3e8c46 = _0x4903.MMnWus(_0x3e8c46, _0x5835f7), _0x41f1e9[_0x244987] = _0x3e8c46;</span><br><span class="line">      &#125; <span class="keyword">else</span> _0x3e8c46 = _0x238d8e;</span><br><span class="line">  </span><br><span class="line">      <span class="keyword">return</span> _0x3e8c46;</span><br><span class="line">    &#125;, _0x4903(_0x41f1e9, _0x3130bc);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  (<span class="function"><span class="keyword">function</span> (<span class="params">_0x4dbad8, _0x3b7f07</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> _0x37755d = _0x4dbad8();</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">while</span> (!![]) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> _0x39c0da = <span class="built_in">parseInt</span>(_0x4903(<span class="number">4069</span>, <span class="string">&#x27;u]yp&#x27;</span>)) / <span class="number">1</span> * (<span class="built_in">parseInt</span>(_0x4903(<span class="number">2125</span>, <span class="string">&#x27;Jx@]&#x27;</span>)) / <span class="number">2</span>) + <span class="built_in">parseInt</span>(_0x4903(<span class="number">140</span>, <span class="string">&#x27;kFVy&#x27;</span>)) / <span class="number">3</span> + -<span class="built_in">parseInt</span>(_0x4903(<span class="number">2566</span>, <span class="string">&#x27;j1TD&#x27;</span>)) / <span class="number">4</span> + <span class="built_in">parseInt</span>(_0x4903(<span class="number">3272</span>, <span class="string">&#x27;a*Xk&#x27;</span>)) / <span class="number">5</span> + -<span class="built_in">parseInt</span>(_0x4903(<span class="number">2587</span>, <span class="string">&#x27;EnP@&#x27;</span>)) / <span class="number">6</span> + -<span class="built_in">parseInt</span>(_0x4903(<span class="number">743</span>, <span class="string">&#x27;5h*C&#x27;</span>)) / <span class="number">7</span> + <span class="built_in">parseInt</span>(_0x4903(<span class="number">5102</span>, <span class="string">&#x27;dVlJ&#x27;</span>)) / <span class="number">8</span>;</span><br><span class="line">  </span><br><span class="line">        <span class="keyword">if</span> (_0x39c0da === _0x3b7f07) <span class="keyword">break</span>;<span class="keyword">else</span> _0x37755d.push(_0x37755d.shift());</span><br><span class="line">      &#125; <span class="keyword">catch</span> (_0x696156) &#123;</span><br><span class="line">        _0x37755d.push(_0x37755d.shift());</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)(_0x8976, <span class="number">214580</span>); <span class="comment">//字符串数组顺序还原，_0x8976为一个返回全局数组的函数，数组太长了就不放上来了</span></span><br></pre></td></tr></table></figure>
+
+<p>这里不关心她如何实现，只要能够调用就好了，不过也进行了分析写在注释中</p>
+<p>绕过其中的检测后就可以放到文件里然后直接引入该js执行了</p>
+<p>为其添加导出</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">module</span>.exports = &#123;</span><br><span class="line">  _0x4903</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; _0x4903 &#125; <span class="keyword">from</span> <span class="string">&#x27;./strdeec&#x27;</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">evalDecryptStr</span>(<span class="params">root</span>)</span>&#123;</span><br><span class="line">    traverse[<span class="string">&quot;default&quot;</span>](root, &#123;</span><br><span class="line">        <span class="function"><span class="title">CallExpression</span>(<span class="params">path</span>)</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> &#123; callee &#125; = path.node;</span><br><span class="line">            <span class="keyword">if</span> (btypes.isIdentifier(callee) &amp;&amp; callee.name == <span class="string">&quot;_0x4903&quot;</span>) &#123; <span class="comment">//判断是否为字符串解密函数</span></span><br><span class="line">                <span class="comment">//console.log(codegen[&quot;default&quot;](path.node).code,&quot;loc:&quot;,path.node.loc?.start.line);</span></span><br><span class="line">                <span class="keyword">let</span> args = path.node.arguments;</span><br><span class="line">                <span class="keyword">if</span>(!btypes.isNumericLiteral(args[<span class="number">0</span>]) || !btypes.isStringLiteral(args[<span class="number">1</span>])) <span class="keyword">return</span>;</span><br><span class="line">                <span class="keyword">let</span> str = (args[<span class="number">0</span>] <span class="keyword">as</span> btypes.NumericLiteral).value;</span><br><span class="line">                <span class="keyword">let</span> key = (args[<span class="number">1</span>] <span class="keyword">as</span> btypes.StringLiteral).value; <span class="comment">//获取函数调用表达式的参数</span></span><br><span class="line">                <span class="comment">//console.log(&quot;decrypt str: &quot; + str + &quot; with key: &quot; + key);</span></span><br><span class="line">                <span class="keyword">let</span> result = _0x4903(str, key); <span class="comment">//调用解密JS</span></span><br><span class="line">                path.replaceWith(btypes.stringLiteral(result)); <span class="comment">//将函数调用替换成返回的字符串</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h3><h4 id="原JS"><a href="#原JS" class="headerlink" title="原JS"></a>原JS</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> _0x36ac29 = &#123;</span><br><span class="line">        <span class="string">&#x27;NaqJs&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params">_0x23b608, _0x3b3abb</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> _0x23b608 + _0x3b3abb;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;UJTOv&#x27;</span>: _0x174a07(<span class="number">0xf38</span>, <span class="string">&#x27;LzP4&#x27;</span>, <span class="number">0xfd8</span>, <span class="number">0x636</span>, <span class="number">0x1585</span>),</span><br><span class="line">        <span class="string">&#x27;KunTi&#x27;</span>: _0x513b7d(<span class="number">0x130c</span>, <span class="number">0xeca</span>, <span class="number">0x876</span>, <span class="string">&#x27;lsex&#x27;</span>, <span class="number">0x51b</span>),</span><br><span class="line">        <span class="string">&#x27;qCfPd&#x27;</span>: _0x513b7d(-<span class="number">0x735</span>, <span class="number">0x161</span>, <span class="number">0x4cf</span>, <span class="string">&#x27;KFQS&#x27;</span>, <span class="number">0x9d0</span>) + <span class="string">&#x27;n&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;CGJyE&#x27;</span>: _0x3b7723(-<span class="number">0x374</span>, <span class="string">&#x27;k2r*&#x27;</span>, <span class="number">0xc46</span>, <span class="number">0x41c</span>, <span class="number">0x16c</span>) + _0x1c1190(<span class="number">0xef5</span>, <span class="string">&#x27;Dvut&#x27;</span>, <span class="number">0x841</span>, <span class="number">0x960</span>, <span class="number">0xae9</span>) + _0x3b7723(-<span class="number">0x165</span>, <span class="string">&#x27;a*Xk&#x27;</span>, -<span class="number">0x5d6</span>, <span class="number">0x3a5</span>, <span class="number">0x743</span>) + <span class="string">&#x27;)&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;aXujP&#x27;</span>: _0x174a07(<span class="number">0x5b9</span>, <span class="string">&#x27;a*Xk&#x27;</span>, <span class="number">0x976</span>, <span class="number">0xf31</span>, <span class="number">0x697</span>) + _0x1c1190(<span class="number">0xb61</span>, <span class="string">&#x27;Jx@]&#x27;</span>, <span class="number">0x10c9</span>, <span class="number">0x7cb</span>, <span class="number">0x8db</span>) + _0x1c1190(<span class="number">0x3e4</span>, <span class="string">&#x27;5h*C&#x27;</span>, <span class="number">0x39f</span>, <span class="number">0x36d</span>, <span class="number">0xc81</span>) + _0x139616(<span class="number">0xd98</span>, <span class="number">0x90e</span>, <span class="string">&#x27;[q9T&#x27;</span>, <span class="number">0x1244</span>, <span class="number">0x4e3</span>) + _0x174a07(<span class="number">0xfc6</span>, <span class="string">&#x27;$TWJ&#x27;</span>, <span class="number">0x1020</span>, <span class="number">0xbef</span>, <span class="number">0xbc5</span>) + _0x174a07(<span class="number">0x801</span>, <span class="string">&#x27;mPMe&#x27;</span>, <span class="number">0xcce</span>, <span class="number">0x8d3</span>, <span class="number">0xbb</span>) + _0x513b7d(<span class="number">0x605</span>, <span class="number">0x1d</span>, -<span class="number">0x31c</span>, <span class="string">&#x27;[q9T&#x27;</span>, -<span class="number">0x3c5</span>),</span><br><span class="line">        <span class="string">&#x27;MTufy&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params">_0x43fade, _0x361ab2</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> _0x43fade(_0x361ab2);</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;cqyFN&#x27;</span>: _0x513b7d(<span class="number">0x6c5</span>, <span class="number">0xcb7</span>, <span class="number">0x1631</span>, <span class="string">&#x27;A$dO&#x27;</span>, <span class="number">0xc76</span>),</span><br><span class="line">        <span class="string">&#x27;ITrER&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params">_0x7d61e2, _0x18ffb2</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> _0x7d61e2 + _0x18ffb2;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;mYpth&#x27;</span>: _0x3b7723(<span class="number">0x3f8</span>, <span class="string">&#x27;vrb1&#x27;</span>, <span class="number">0x487</span>, <span class="number">0xa64</span>, <span class="number">0x32f</span>),</span><br><span class="line">        <span class="string">&#x27;ySBMh&#x27;</span>: _0x174a07(<span class="number">0x10a4</span>, <span class="string">&#x27;LzP4&#x27;</span>, <span class="number">0x10fb</span>, <span class="number">0x1589</span>, <span class="number">0xc04</span>),</span><br><span class="line">        <span class="string">&#x27;fhGPp&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params">_0x10918e</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> _0x10918e();</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;BPPTg&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params">_0xbea0a9, _0xf05a6b</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> _0xbea0a9 === _0xf05a6b;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;aFUAX&#x27;</span>: _0x1c1190(<span class="number">0x1105</span>, <span class="string">&#x27;DZK9&#x27;</span>, <span class="number">0xa48</span>, <span class="number">0x101f</span>, <span class="number">0x17c1</span>),</span><br><span class="line">        <span class="string">&#x27;YkQUD&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params">_0x3d394f, _0x304d01</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> _0x3d394f !== _0x304d01;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;XUKwk&#x27;</span>: _0x1c1190(<span class="number">0x53c</span>, <span class="string">&#x27;u]yp&#x27;</span>, <span class="number">0x1b9</span>, <span class="number">0xa84</span>, <span class="number">0x7fb</span>),</span><br><span class="line">        <span class="string">&#x27;hGUML&#x27;</span>: _0x174a07(<span class="number">0xbc5</span>, <span class="string">&#x27;[Kpm&#x27;</span>, <span class="number">0xb6a</span>, <span class="number">0x3bd</span>, <span class="number">0xa68</span>),</span><br><span class="line">        <span class="string">&#x27;FZvDE&#x27;</span>: <span class="function"><span class="keyword">function</span>(<span class="params">_0x3899f7, _0x4782b9</span>) </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> _0x3899f7 === _0x4782b9;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&#x27;LCVgl&#x27;</span>: _0x1c1190(<span class="number">0x925</span>, <span class="string">&#x27;s*!&amp;&#x27;</span>, <span class="number">0x2f8</span>, <span class="number">0x4d4</span>, -<span class="number">0x3e5</span>),</span><br><span class="line">        <span class="string">&#x27;FFifH&#x27;</span>: _0x174a07(<span class="number">0x1437</span>, <span class="string">&#x27;Thp]&#x27;</span>, <span class="number">0x17dc</span>, <span class="number">0x1c99</span>, <span class="number">0x1031</span>)</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="还原后"><a href="#还原后" class="headerlink" title="还原后"></a>还原后</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> _0x36ac29 = &#123;</span><br><span class="line">    <span class="string">&#x27;NaqJs&#x27;</span>: <span class="function"><span class="keyword">function</span> (<span class="params">_0x23b608, _0x3b3abb</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> _0x23b608 + _0x3b3abb;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;UJTOv&#x27;</span>: <span class="string">&quot;debu&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;KunTi&#x27;</span>: <span class="string">&quot;gger&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;qCfPd&#x27;</span>: <span class="string">&quot;action&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;CGJyE&#x27;</span>: <span class="string">&quot;function *\\( *\\)&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;aXujP&#x27;</span>: <span class="string">&quot;\\+\\+ *(?:[a-zA-Z_$][0-9a-zA-Z_$]*)&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;MTufy&#x27;</span>: <span class="function"><span class="keyword">function</span> (<span class="params">_0x43fade, _0x361ab2</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> _0x43fade(_0x361ab2);</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;cqyFN&#x27;</span>: <span class="string">&quot;init&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;ITrER&#x27;</span>: <span class="function"><span class="keyword">function</span> (<span class="params">_0x7d61e2, _0x18ffb2</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> _0x7d61e2 + _0x18ffb2;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;mYpth&#x27;</span>: <span class="string">&quot;chain&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;ySBMh&#x27;</span>: <span class="string">&quot;input&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;fhGPp&#x27;</span>: <span class="function"><span class="keyword">function</span> (<span class="params">_0x10918e</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> _0x10918e();</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;BPPTg&#x27;</span>: <span class="function"><span class="keyword">function</span> (<span class="params">_0xbea0a9, _0xf05a6b</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> _0xbea0a9 === _0xf05a6b;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;aFUAX&#x27;</span>: <span class="string">&quot;WrmJg&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;YkQUD&#x27;</span>: <span class="function"><span class="keyword">function</span> (<span class="params">_0x3d394f, _0x304d01</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> _0x3d394f !== _0x304d01;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;XUKwk&#x27;</span>: <span class="string">&quot;SBXpo&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;hGUML&#x27;</span>: <span class="string">&quot;GJQSO&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;FZvDE&#x27;</span>: <span class="function"><span class="keyword">function</span> (<span class="params">_0x3899f7, _0x4782b9</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> _0x3899f7 === _0x4782b9;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&#x27;LCVgl&#x27;</span>: <span class="string">&quot;spaxN&quot;</span>,</span><br><span class="line">    <span class="string">&#x27;FFifH&#x27;</span>: <span class="string">&quot;QeYEB&quot;</span></span><br><span class="line">  &#125;;</span><br></pre></td></tr></table></figure>
+
+<p>至此成功还原字符串加密，此部分结束。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/11/14/macOS13-on-VMware/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-11-18 19:31:55
+            </span>
+            
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%98%AF%E5%A6%82%E4%BD%95%E6%B7%B7%E6%B7%86%E7%9A%84"><span class="toc-text">字符串是如何混淆的</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A3%E5%AF%86%E6%96%B9%E5%BC%8F"><span class="toc-text">解密方式</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%98%E5%8E%9F"><span class="toc-text">还原</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E8%BF%98%E5%8E%9F%E5%AE%9E%E7%8E%B0"><span class="toc-text">函数调用还原实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8"><span class="toc-text">字符串函数调用</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%88%E6%9E%9C"><span class="toc-text">效果</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8E%9FJS"><span class="toc-text">原JS</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%98%E5%8E%9F%E5%90%8E"><span class="toc-text">还原后</span></a></li></ol></li></ol>
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+ 
+  <script src="//github.elemecdn.com/leancloud-storage@3/dist/av-min.js"></script>
+  <script src='//github.elemecdn.com/valine@1.5.1/dist/Valine.min.js'></script>
+
+  <div id="vcomments"></div>
+
+  <script>
+    new Valine({
+      el: '#vcomments',
+      appId: 'bkevnbohTLs8IMTtlPQAE46E-gzGzoHsz',
+      appKey: 'WRvdsNxM9t5XI41zg0QrBmmX',
+      placeholder: '留个言吧~',
+      avatar: 'retro',
+      lang: 'zh'
+    })
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="Email" href="/about/">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="WeChat" href="/about/">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">Copyright © DiamondHunters 2022</a>
+        
+    </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E4%BD%BF%E7%94%A8AST%E8%BF%98%E5%8E%9F%E6%9F%90JS%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%B7%B7%E6%B7%86 + '&url=' + https%3A%2F%2Fbai.re%2F2022%2F11%2F18%2Fdeobf-str-by-ast%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/2022/11/18/deobf-str-by-ast/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
