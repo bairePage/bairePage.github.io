@@ -11,7 +11,7 @@
   
   <title>
     
-      Tag 
+      archive_a: 2023/2 
       
       
       |
@@ -105,44 +105,93 @@
 
 
       <div class="flex-container">
-        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
-<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+        <!-- 归档页，展示本站所有文章，按照年份降序归类，url形式：https://yoursite/archives/ -->
 
-<!-- LaTex Display -->
-<script src="https://polyfill.alicdn.com/polyfill.min.js?features=es6"></script>
-<script type="text/javascript" id="MathJax-script" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
-</script>
-<script>
-MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']]
-  }
-};
-</script>
+<!-- last: 按年份把文章分组，当前遍历到的年份 -->
+<!-- now: 当前遍历到的文章的发布年份 -->
 
-
-
-  
-
-  
-
-  
-  <!-- 关于页 url形式：https://yoursite/about/ -->
-    <div class="container about-index">
-      <div class="markdown-body">
-        <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">me@bai.re</span><br><span class="line">Diamond_Hunters</span><br><span class="line">QQ:872482123</span><br></pre></td></tr></table></figure>
-
-
-
-
-
-
+<div class="container archives">
+  <div class="post-list">
+    
+        <!-- 后续文章的发布年份呈现 -->
+        <div class="content-title">
+          <h2>
+            <span>2023</span>
+          </h2>
+        </div>
+      
+      <div class="post-item" title="在rock5b(armbian)上运行cuttlefish与redroid">
+        <div class="time-m-d">02-23</div>
+        <div class="title">
+          <a href="/2023/02/23/cuttlefish-and-redroid-on-rock5b/">
+            <span>在rock5b(armbian)上运行cuttlefish与redroid</span>
+          </a>
+        </div>
       </div>
-    </div>
-  
-
-  
+    
+        <!-- 后续文章的发布年份呈现 -->
+        <div class="content-title">
+          <h2>
+            <span>2022</span>
+          </h2>
+        </div>
+      
+      <div class="post-item" title="使用AST还原某JS字符串混淆">
+        <div class="time-m-d">11-18</div>
+        <div class="title">
+          <a href="/2022/11/18/deobf-str-by-ast/">
+            <span>使用AST还原某JS字符串混淆</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="在VMware上安装MacOS 13(Ventura)">
+        <div class="time-m-d">11-14</div>
+        <div class="title">
+          <a href="/2022/11/14/macOS13-on-VMware/">
+            <span>在VMware上安装MacOS 13(Ventura)</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="typora-crack">
+        <div class="time-m-d">11-09</div>
+        <div class="title">
+          <a href="/2022/11/09/typora-crack/">
+            <span>typora-crack</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="2022-游戏安全竞赛-安卓客户端方向WP">
+        <div class="time-m-d">04-29</div>
+        <div class="title">
+          <a href="/2022/04/29/2022-gamesec-final-wp/">
+            <span>2022-游戏安全竞赛-安卓客户端方向WP</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="IDA中Names的类型及其图标">
+        <div class="time-m-d">01-17</div>
+        <div class="title">
+          <a href="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/">
+            <span>IDA中Names的类型及其图标</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="Hello World">
+        <div class="time-m-d">01-16</div>
+        <div class="title">
+          <a href="/2022/01/16/hello-world/">
+            <span>Hello World</span>
+          </a>
+        </div>
+      </div>
+    
+  </div>
+</div>
 
         <div class="footer">
   <div class="social">
@@ -405,24 +454,6 @@ MathJax = {
 
 
         
-  
-    <div class="share-icon tools-bar-item">
-      <a href="javascript: void(0)" id="share-icon">
-        <i class="iconfont iconshare"></i>
-      </a>
-      <div class="share-content hidden">
-        
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + tags + '&url=' + https%3A%2F%2Fbai.re%2Fabout%2Findex.html + '" target="_blank" title="Twitter">
-            <i class="iconfont icon-twitter"></i>
-          </a>
-        
-        
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/about/index.html" target="_blank" title="Facebook">
-            <i class="iconfont icon-facebooksquare"></i>
-          </a>
-        
-      </div>
-    </div>
   
   
 <script src="/js/shares.js"></script>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="DiamondHunters" />
+  <meta name="description" content="" />
+  
+  
+  <title>
+    
+      在rock5b(armbian)上运行cuttlefish与redroid 
+      
+      
+      |
+    
+     Dia的记事本
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcdn.net//ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+  <!---<script async src="//static.getclicky.com/101350277.js"></script>--->
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatarMe.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">Dia</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.alicdn.com/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">在rock5b(armbian)上运行cuttlefish与redroid</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2023-02-23 13:22:16
+        </span>
+        
+      </div>
+      <div class="markdown-body">
+        <h3 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h3><table>
+<thead>
+<tr>
+<th>设备</th>
+<th>rock5b 16g + nvme</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>系统</td>
+<td>armbian （需刷官网spi image）</td>
+</tr>
+<tr>
+<td>内核</td>
+<td>5.10.110-legacy-rockchip-rk3588</td>
+</tr>
+</tbody></table>
+<h3 id="Cuttlefish与redroid对比"><a href="#Cuttlefish与redroid对比" class="headerlink" title="Cuttlefish与redroid对比"></a>Cuttlefish与redroid对比</h3><p>得益于rock5b搭载的arm架构cpu rk3588强大的性能，我们可以在这块板子上直接刷入android系统运行，亦可采用redroid或cuttlefish等方案容器化/虚拟化宿主机资源来提供android运行环境。</p>
+<p>不过cuttlefish与redroid有什么异同点呢？这里总结一下</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>redroid</th>
+<th>cuttlefish</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>类型</td>
+<td>基于docker的容器</td>
+<td>基于 <code>crosvm</code>/<code>qemu</code> 的虚拟机</td>
+</tr>
+<tr>
+<td>虚拟化</td>
+<td>不需要</td>
+<td>需要</td>
+</tr>
+<tr>
+<td>内核</td>
+<td>系统内核，需要开启<code>ashmem</code>,<code>binder</code>等。同时应用进程运行在系统内核中可以直接对其进行一些操作</td>
+<td>独立android内核，运行在虚拟机中，内部进程对系统内核不可见</td>
+</tr>
+<tr>
+<td>指令集翻译</td>
+<td>可以添加<code>libhoudini.so</code></td>
+<td>未见支持理论可行</td>
+</tr>
+<tr>
+<td>资源消耗</td>
+<td>容器，内核部分共用节省资源</td>
+<td>虚拟机，需要完整系统资源</td>
+</tr>
+<tr>
+<td>AOSP</td>
+<td>修改过</td>
+<td>原装</td>
+</tr>
+</tbody></table>
+<h3 id="redroid安装"><a href="#redroid安装" class="headerlink" title="redroid安装"></a>redroid安装</h3><p>由于redroid使用系统内核，需要开启一些android需要的内核功能。</p>
+<p>这里可以参考官方安装步骤，由于我的rock5b安装的是armbian没有预构建模块,需要重新编译内核。</p>
+<h4 id="内核编译安装步骤"><a href="#内核编译安装步骤" class="headerlink" title="内核编译安装步骤"></a>内核编译安装步骤</h4><p>下载系统使用内核版本的源码 </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install linux-source-5.10.110-legacy-rockchip-rk3588</span><br></pre></td></tr></table></figure>
+
+<p>安装完后在src目录下获得内核源码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">/usr/src</span><br><span class="line">├── linux-headers-5.10.110-rockchip-rk3588</span><br><span class="line">├── linux-rockchip-rk3588-legacy_5.10.110_22.11.4_config.xz</span><br><span class="line">└── linux-source-5.10.110-rockchip-rk3588.tar.xz</span><br></pre></td></tr></table></figure>
+
+<p>解压内核并覆盖配置（也可以 <code>zcat /proc/config.gz &gt; .config</code>进行配置）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> ~</span><br><span class="line">mkdir kernel</span><br><span class="line"><span class="built_in">cd</span> kernel </span><br><span class="line">tar -xf /usr/src/linux-source-5.10.110-rockchip-rk3588.tar.xz</span><br><span class="line">tar -xf /usr/src/linux-rockchip-rk3588-legacy_5.10.110_22.11.4_config.xz</span><br><span class="line">mv -v linux-rockchip-rk3588-legacy_5.10.110_22.11.4_config .config</span><br></pre></td></tr></table></figure>
+
+<p>使用mrproper进行清理并手动配置开启需要的内核功能</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make mrproper</span><br><span class="line">make menuconfig</span><br></pre></td></tr></table></figure>
+
+<p>进入 <code>Device Drivers &gt; Android</code> 选中需要的特性（移动到位置空格选中）</p>
+<p><img src="/2023/02/23/cuttlefish-and-redroid-on-rock5b/image-20230223205940662.png" alt="image-20230223205940662"></p>
+<p><code>Device Drivers &gt; Staging drivers &gt; Android</code> 开启ashmem</p>
+<p><img src="/2023/02/23/cuttlefish-and-redroid-on-rock5b/image-20230223210132207.png" alt="image-20230223210132207"></p>
+<p>选好之后切到save，保存完exit</p>
+<p>构建并安装</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -j8</span><br></pre></td></tr></table></figure>
+
+<p>我们要替换内核，所以需要将我们编译的内核模块也进行安装,回到编译目录</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo make modules_install</span><br></pre></td></tr></table></figure>
+
+<p><strong>由于我们是直接编译的当前内核源码，所以使用<code>sudo make install</code>即可安装，下面的指令未更新initrd等数据，不建议使用，但提供在这方便手动调试等</strong></p>
+<p><del>手动替换文件安装内核</del>（非必要不使用）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">cp arch/arm64/boot/Image /boot/vmlinuz-5.10.110</span><br><span class="line">chmod +x /boot/vmlinuz-5.10.110</span><br><span class="line">cp .config /boot/config-5.10.110</span><br><span class="line">cp System.map /boot/System.map-5.10.110</span><br><span class="line"><span class="built_in">cd</span> /boot</span><br><span class="line">sudo mv Image Image.old</span><br><span class="line">sudo ln -s vmlinuz-5.10.110 Image</span><br><span class="line">sudo mv vmlinuz vmlinuz.old</span><br><span class="line">sudo ln -s vmlinuz-5.10.110 vmlinuz</span><br></pre></td></tr></table></figure>
+
+<p><strong>如果您是使用 <code>make install</code>进行安装的，请在重启前单独执行下面的命令（重要，未建立正确映射关系会导致内核无法启动，需要SD卡启动修复链接）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /boot</span><br><span class="line">sudo mv Image Image.old</span><br><span class="line">sudo ln -s vmlinuz-5.10.110 Image</span><br></pre></td></tr></table></figure>
+
+<h4 id="docker安装"><a href="#docker安装" class="headerlink" title="docker安装"></a>docker安装</h4><p>armbian按照官方介绍安装docker前执行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">update-alternatives --<span class="built_in">set</span> iptables /usr/sbin/iptables-legacy</span><br><span class="line">update-alternatives --<span class="built_in">set</span> ip6tables /usr/sbin/ip6tables-legacy</span><br></pre></td></tr></table></figure>
+
+<p>然后按照<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/install/ubuntu/">官方教程</a>安装</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sudo mkdir -m 0755 -p /etc/apt/keyrings</span><br><span class="line">curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg</span><br><span class="line"><span class="built_in">echo</span> \</span><br><span class="line">  <span class="string">&quot;deb [arch=<span class="subst">$(dpkg --print-architecture)</span> signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \</span></span><br><span class="line"><span class="string">  <span class="subst">$(lsb_release -cs)</span> stable&quot;</span> | sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null</span><br><span class="line">sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin</span><br></pre></td></tr></table></figure>
+
+<h4 id="运行redroid"><a href="#运行redroid" class="headerlink" title="运行redroid"></a>运行redroid</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd --rm --privileged \</span><br><span class="line">    --pull always \</span><br><span class="line">    -v ~/data:/data \</span><br><span class="line">    -p 5555:5555 \</span><br><span class="line">    redroid/redroid:11.0.0-latest</span><br></pre></td></tr></table></figure>
+
+<p>由于这里使用的是armbian(ubuntu 22.04)，会发现启动异常。查看日志lmkd反复退出android lmk服务异常。</p>
+<p>经<a target="_blank" rel="noopener" href="https://blog.seeflower.dev/">SeeFlowerX</a>大佬提示Ubuntu22.04使用cgroup v2，不满足redroid需求，需要开启cgroup v1</p>
+<h4 id="开启cgroup-v1"><a href="#开启cgroup-v1" class="headerlink" title="开启cgroup v1"></a>开启cgroup v1</h4><p>在文件 <code>/boot/armbianEnv.txt</code> 中加入一行（插入内核cmdline <code>systemd.unified_cgroup_hierarchy=0</code>）</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">extraargs</span>=systemd.unified_cgroup_hierarchy=<span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<p>重启即可生效</p>
+<h4 id="连接"><a href="#连接" class="headerlink" title="连接"></a>连接</h4><p>前面运行的时候暴漏了adb 5555端口，<code>adb connect ip:5555</code>即可，scrcpy可以操作亦可参照官方的使用其他方式查看视频流。</p>
+<h3 id="cuttlefish安装"><a href="#cuttlefish安装" class="headerlink" title="cuttlefish安装"></a><a target="_blank" rel="noopener" href="https://source.android.com/docs/setup/create/cuttlefish-use?hl=zh-cn">cuttlefish安装</a></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install -y git devscripts config-package-dev debhelper-compat golang curl</span><br><span class="line">git <span class="built_in">clone</span> https://github.com/google/android-cuttlefish</span><br><span class="line"><span class="built_in">cd</span> android-cuttlefish</span><br></pre></td></tr></table></figure>
+
+<p>下一步前因为网络环境问题建议做两件事</p>
+<p>1.修改 <code>frontend/src/goutil</code> 中的goproxy地址</p>
+<p><img src="/2023/02/23/cuttlefish-and-redroid-on-rock5b/image-20230226165051193.png" alt="image-20230226165051193"></p>
+<p>2.修改<code>frontend/setup-nodejs-env.sh</code>中nodejs下载地址</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo vim frontend/setup-nodejs-env.sh</span><br><span class="line">:%s/https:\/\/nodejs.org\/dist\//https:\/\/mirrors.tuna.tsinghua.edu.cn\/nodejs-release\/</span><br></pre></td></tr></table></figure>
+
+<h4 id="构建deb"><a href="#构建deb" class="headerlink" title="构建deb"></a>构建deb</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> dir <span class="keyword">in</span> base frontend; <span class="keyword">do</span></span><br><span class="line">  <span class="built_in">cd</span> <span class="variable">$dir</span></span><br><span class="line">  debuild -i -us -uc -b -d</span><br><span class="line">  <span class="built_in">cd</span> ..</span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="安装deb"><a href="#安装deb" class="headerlink" title="安装deb"></a>安装deb</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo dpkg -i ./cuttlefish-base_*_*64.deb || sudo apt-get install -f</span><br><span class="line">sudo dpkg -i ./cuttlefish-user_*_*64.deb || sudo apt-get install -f</span><br><span class="line">sudo usermod -aG kvm,cvdnetwork,render <span class="variable">$USER</span></span><br><span class="line">sudo reboot</span><br></pre></td></tr></table></figure>
+
+<h4 id="下载cuttlefish使用的镜像"><a href="#下载cuttlefish使用的镜像" class="headerlink" title="下载cuttlefish使用的镜像"></a>下载cuttlefish使用的镜像</h4><p>在 <a target="_blank" rel="noopener" href="https://ci.android.com/builds/submitted/9657764/aosp_cf_arm64_phone-userdebug/latest">ci.android.com</a> 选择cf的的镜像跟工具下载</p>
+<p><img src="/2023/02/23/cuttlefish-and-redroid-on-rock5b/image-20230226181424429.png" alt="image-20230226181424429"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">tar -xvf cvd-host_package.tar.gz</span><br><span class="line">unzip aosp_cf_arm64_phone-img-9657764.zip</span><br></pre></td></tr></table></figure>
+
+<p>别怪我把文件解压的乱七八糟，官方guide教的</p>
+<h4 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HOME=<span class="variable">$PWD</span> ./bin/launch_cvd --daemon</span><br></pre></td></tr></table></figure>
+
+<p>如果您启动时遇到<code>Address family not supported by protocol</code></p>
+<p>经排查是cuttlefish在绑定vsock时出错，参照文档发现其需要内核开启VSOCK，而guide在debian环境下，经查debian默认开启了该特性，所以我们需要在armbian的内核上开启VSOCK支持，开启过程参照<a href="#%E5%86%85%E6%A0%B8%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4">内核编译安装步骤</a>,需要开启的选项参照 <a target="_blank" rel="noopener" href="https://github.com/radxa/kernel/commit/8f044dffd16fd667ff2272ee626e3ce0355c7eaa">https://github.com/radxa/kernel/commit/8f044dffd16fd667ff2272ee626e3ce0355c7eaa</a> (感谢非虫大佬 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/609085533">https://zhuanlan.zhihu.com/p/609085533</a>)</p>
+<h4 id="关闭"><a href="#关闭" class="headerlink" title="关闭"></a>关闭</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./bin/launch_cvd</span><br></pre></td></tr></table></figure>
+
+<h4 id="GPU加速"><a href="#GPU加速" class="headerlink" title="GPU加速"></a>GPU加速</h4><p>暂不支持</p>
+<h4 id="文档"><a href="#文档" class="headerlink" title="文档"></a>文档</h4><p>请查看 <a target="_blank" rel="noopener" href="https://source.android.com/docs/setup/create/cuttlefish?hl=zh-cn">https://source.android.com/docs/setup/create/cuttlefish?hl=zh-cn</a> 或在cuttlefish代码页查看readme（内容一致，网页机翻可切英文）</p>
+<h3 id="内核无法启动排查与修复"><a href="#内核无法启动排查与修复" class="headerlink" title="内核无法启动排查与修复"></a>内核无法启动排查与修复</h3><p>我所使用的armbian boot分区结构如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">drwxr-xr-x  4 root root     4096 Feb 27 15:13 ./</span><br><span class="line">drwxr-xr-x 19 root root     4096 Dec  9 18:50 ../</span><br><span class="line">-rw-r--r--  1 root root      253 Feb 27 15:13 armbianEnv.txt</span><br><span class="line">-rw-r--r--  1 root root     1536 Dec  9 19:03 armbian_first_run.txt.template</span><br><span class="line">-rw-r--r--  1 root root    38518 Dec  9 19:03 boot.bmp</span><br><span class="line">-rw-r--r--  1 root root     3180 Dec  9 18:50 boot.cmd</span><br><span class="line">-rw-rw-r--  1 root root     3252 Dec  9 19:05 boot.scr</span><br><span class="line">-rw-r--r--  1 root root   213137 Feb 27 15:11 config-5.10.110</span><br><span class="line">-rw-r--r--  1 root root   212174 Dec  8 23:14 config-5.10.110-rockchip-rk3588</span><br><span class="line">lrwxrwxrwx  1 root root       28 Dec  9 18:52 dtb -&gt; dtb-5.10.110-rockchip-rk3588/</span><br><span class="line">drwxr-xr-x  3 root root     4096 Dec  9 18:52 dtb-5.10.110-rockchip-rk3588/</span><br><span class="line">lrwxrwxrwx  1 root root       16 Feb 27 13:34 Image -&gt; vmlinuz-5.10.110</span><br><span class="line">lrwxrwxrwx  1 root root       19 Feb 26 22:35 initrd.img -&gt; initrd.img-5.10.110</span><br><span class="line">-rw-r--r--  1 root root 15218451 Feb 27 15:11 initrd.img-5.10.110</span><br><span class="line">-rw-r--r--  1 root root 15257055 Feb 26 22:09 initrd.img-5.10.110-rockchip-rk3588</span><br><span class="line">drwx------  2 root root    16384 Dec  9 19:05 lost+found/</span><br><span class="line">-rw-r--r--  1 root root        0 Dec  9 18:52 .next</span><br><span class="line">-rw-r--r--  1 root root  7629956 Feb 27 15:11 System.map-5.10.110</span><br><span class="line">-rw-r--r--  1 root root  7630638 Dec  8 23:14 System.map-5.10.110-rockchip-rk3588</span><br><span class="line">lrwxrwxrwx  1 root root       16 Feb 27 15:11 uInitrd -&gt; uInitrd-5.10.110</span><br><span class="line">-rw-r--r--  1 root root 15218515 Feb 27 15:11 uInitrd-5.10.110</span><br><span class="line">-rw-r--r--  1 root root 15254433 Dec  9 19:07 uInitrd-5.10.110-rockchip-rk3588</span><br><span class="line">lrwxrwxrwx  1 root root       16 Feb 27 15:11 vmlinuz -&gt; vmlinuz-5.10.110</span><br><span class="line">-rw-r--r--  1 root root 33438208 Feb 27 15:11 vmlinuz-5.10.110</span><br><span class="line">-rw-r--r--  1 root root 33020416 Dec  8 23:14 vmlinuz-5.10.110-rockchip-rk3588</span><br></pre></td></tr></table></figure>
+
+<p>当上电5b蓝灯常亮时基本可以确认内核无法正确启动，您可以使用sd卡引导或拆卸硬盘在可运行的系统上挂载boot分区</p>
+<p>比较重要的几个文件</p>
+<h4 id="vmlinuz"><a href="#vmlinuz" class="headerlink" title="vmlinuz"></a>vmlinuz</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">dia@rock-5b:/boot$ file vmlinuz</span><br><span class="line">vmlinuz: symbolic link to vmlinuz-5.10.110</span><br><span class="line">dia@rock-5b:/boot$ file vmlinuz-5.10.110</span><br><span class="line">vmlinuz-5.10.110: Linux kernel ARM64 boot executable Image, little-endian, 4K pages</span><br></pre></td></tr></table></figure>
+
+<p>内核二进制文件，在这里的链接并不合理。经测试不使用该文件</p>
+<h4 id="initrd-img"><a href="#initrd-img" class="headerlink" title="initrd.img"></a>initrd.img</h4><p>initramfs，如果您使用make install安装内核会自动打包该文件，无法启动也请检查符号链接</p>
+<h4 id="uInitrd"><a href="#uInitrd" class="headerlink" title="uInitrd"></a>uInitrd</h4><p>uboot所用，<code>make install</code>时生成</p>
+<h4 id="Image"><a href="#Image" class="headerlink" title="Image"></a>Image</h4><p>经测试armbian实际通过该文件启动内核，请确认该文件正确连接到内核二进制文件（同上面的vmlinuz）上</p>
+<h4 id="启动进入initramfs-shell"><a href="#启动进入initramfs-shell" class="headerlink" title="启动进入initramfs shell"></a>启动进入initramfs shell</h4><p>如果您exit提示找不到启动设备，可能是在编译时使用了错误的配置/配置文件导致nvme加载出错。请恢复原内核重新配置编译</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/11/18/deobf-str-by-ast/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2023-02-23 13:22:16
+            </span>
+            
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-text">环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Cuttlefish%E4%B8%8Eredroid%E5%AF%B9%E6%AF%94"><span class="toc-text">Cuttlefish与redroid对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#redroid%E5%AE%89%E8%A3%85"><span class="toc-text">redroid安装</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4"><span class="toc-text">内核编译安装步骤</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#docker%E5%AE%89%E8%A3%85"><span class="toc-text">docker安装</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%90%E8%A1%8Credroid"><span class="toc-text">运行redroid</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E5%90%AFcgroup-v1"><span class="toc-text">开启cgroup v1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9E%E6%8E%A5"><span class="toc-text">连接</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#cuttlefish%E5%AE%89%E8%A3%85"><span class="toc-text">cuttlefish安装</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9E%84%E5%BB%BAdeb"><span class="toc-text">构建deb</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85deb"><span class="toc-text">安装deb</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BDcuttlefish%E4%BD%BF%E7%94%A8%E7%9A%84%E9%95%9C%E5%83%8F"><span class="toc-text">下载cuttlefish使用的镜像</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8"><span class="toc-text">启动</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E9%97%AD"><span class="toc-text">关闭</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#GPU%E5%8A%A0%E9%80%9F"><span class="toc-text">GPU加速</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E6%A1%A3"><span class="toc-text">文档</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E6%97%A0%E6%B3%95%E5%90%AF%E5%8A%A8%E6%8E%92%E6%9F%A5%E4%B8%8E%E4%BF%AE%E5%A4%8D"><span class="toc-text">内核无法启动排查与修复</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#vmlinuz"><span class="toc-text">vmlinuz</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#initrd-img"><span class="toc-text">initrd.img</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#uInitrd"><span class="toc-text">uInitrd</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Image"><span class="toc-text">Image</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E8%BF%9B%E5%85%A5initramfs-shell"><span class="toc-text">启动进入initramfs shell</span></a></li></ol></li></ol>
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+ 
+  <script src="//github.elemecdn.com/leancloud-storage@3/dist/av-min.js"></script>
+  <script src='//github.elemecdn.com/valine@1.5.1/dist/Valine.min.js'></script>
+
+  <div id="vcomments"></div>
+
+  <script>
+    new Valine({
+      el: '#vcomments',
+      appId: 'bkevnbohTLs8IMTtlPQAE46E-gzGzoHsz',
+      appKey: 'WRvdsNxM9t5XI41zg0QrBmmX',
+      placeholder: '留个言吧~',
+      avatar: 'retro',
+      lang: 'zh'
+    })
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="Email" href="/about/">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="WeChat" href="/about/">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">Copyright © DiamondHunters 2022</a>
+        
+    </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E5%9C%A8rock5b(armbian)%E4%B8%8A%E8%BF%90%E8%A1%8Ccuttlefish%E4%B8%8Eredroid + '&url=' + https%3A%2F%2Fbai.re%2F2023%2F02%2F23%2Fcuttlefish-and-redroid-on-rock5b%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/2023/02/23/cuttlefish-and-redroid-on-rock5b/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
