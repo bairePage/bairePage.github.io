@@ -11,7 +11,7 @@
   
   <title>
     
-      \[翻译\] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries) 
+      [翻译] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries) 
       
       
       |
@@ -133,7 +133,7 @@ MathJax = {
   <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
   <div class="container post-details" id="post-details">
     <div class="post-content">
-      <div class="post-title">\[翻译\] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries)</div>
+      <div class="post-title">[翻译] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries)</div>
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime" title="Update time"></i>
@@ -156,10 +156,10 @@ MathJax = {
 </ul>
 <p>引擎是Triton的核心，并被建模为可以相互通信并可以从Python绑定中受到用户控制。图1说明了Triton的整体设计。其中的一些引擎将在接下来的章节中描述，以更好地理解第2章。</p>
 <p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426143222821.png" alt="图1"></p>
-<h3 id="1-1-色调引擎"><a href="#1-1-色调引擎" class="headerlink" title="1.1 色调引擎"></a>1.1 色调引擎</h3><p>色调分析(翻译标注：污点分析)可在执行过程中保持对特定数据变化的视图。通常，用户输入会被标记为受到色调影响，而色调引擎的作用是跟踪这些输入的变化（与输入交互的指令，这些输入存储在哪里以及如何传播等）。除了跟踪数据变化外，该分析在Triton中有四个优点：</p>
+<h3 id="1-1-污点引擎"><a href="#1-1-污点引擎" class="headerlink" title="1.1 污点引擎"></a>1.1 污点引擎</h3><p>污点分析可在执行过程中保持对特定数据变化的视图。通常，用户输入会被标记为受到污点影响，而污点引擎的作用是跟踪这些输入的变化（与输入交互的指令，这些输入存储在哪里以及如何传播等）。除了跟踪数据变化外，该分析在Triton中有四个优点：</p>
 <ul>
 <li>优点1：其第一个作用是帮助符号执行决定是否应该对内存地址的值进行符号处理或具体处理。通常，如果指令的源操作数未被标记，具体值就足够了。否则，当前值取决于用户指定的输入。因此，Triton使用源操作数的符号值。</li>
-<li>优点2：其第二个作用是特例。色调分析和符号执行都使用相同的输入。对于第一种情况，它们代表着污点的传播源。对于第二种情况，这些被标记污染的内存单元是符号变量，符号执行将基于内存的污染标记构建符号变量。一个被标记污染但符号引擎未知的内存单元表示一个新的输入，因此必须创建一个代表该输入的符号变量。</li>
+<li>优点2：其第二个作用是特例。污点分析和符号执行都使用相同的输入。对于第一种情况，它们代表着污点的传播源。对于第二种情况，这些被标记污染的内存单元是符号变量，符号执行将基于内存的污染标记构建符号变量。一个被标记污染但符号引擎未知的内存单元表示一个新的输入，因此必须创建一个代表该输入的符号变量。</li>
 <li>优点3：污点还可以用作符号执行的过滤器。在跟踪期间，许多指令不会影响用户指定的输入（它们的操作数没有被标记）。因此，这些指令永远不会出现在路径条件的约束中。因此，没有必要对它们进行符号执行。通过污点分析实现的符号执行优化用于<code>MergePoint</code> [3]和<code>FuzzWin</code> [4]。</li>
 <li>优点4：最后，污点标记可以简单地用于可视化数据在执行中的传播。</li>
 </ul>
@@ -320,7 +320,7 @@ MathJax = {
   <div class="post-catalog hidden" id="catalog">
     <div class="title">Contents</div>
     <div class="catalog-content">
-      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E7%AB%A0%E4%BB%8B%E7%BB%8D"><span class="toc-text">文章介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Triton%E6%A1%86%E6%9E%B6%E7%AE%80%E4%BB%8B"><span class="toc-text">1.Triton框架简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E8%89%B2%E8%B0%83%E5%BC%95%E6%93%8E"><span class="toc-text">1.1 色调引擎</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E7%AC%A6%E5%8F%B7%E5%BC%95%E6%93%8E"><span class="toc-text">1.2 符号引擎</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E7%94%A8SMT2-Lib%E8%A1%A8%E7%A4%BA%E8%AF%AD%E4%B9%89"><span class="toc-text">1.3 用SMT2-Lib表示语义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-%E7%AC%A6%E5%8F%B7%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E6%8A%BD%E8%B1%A1%E8%AF%AD%E6%B3%95%E6%A0%91"><span class="toc-text">1.4 符号表达式的抽象语法树</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-O-LLVM"><span class="toc-text">2.O-LLVM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E7%A1%AE%E5%AE%9A%E6%95%B0%E6%8D%AE%E5%85%A5%E5%8F%A3%E7%82%B9"><span class="toc-text">2.1 确定数据入口点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E9%9A%94%E7%A6%BB%E7%9A%84%E8%BF%BD%E8%B8%AA"><span class="toc-text">2.2 隔离的追踪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E7%AC%A6%E5%8F%B7%E5%8C%96%E7%BA%A6%E6%9D%9F"><span class="toc-text">2.3 符号化约束</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%9B%BF%E6%8D%A2%E6%B7%B7%E6%B7%86%E5%88%86%E6%9E%90"><span class="toc-text">2.4 表达式替换混淆分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-%E6%8E%A7%E5%88%B6%E6%B5%81%E5%B9%B3%E5%9D%A6%E5%8C%96%E6%B7%B7%E6%B7%86%E5%88%86%E6%9E%90"><span class="toc-text">2.5  控制流平坦化混淆分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-%E8%99%9A%E5%81%87%E6%8E%A7%E5%88%B6%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text">2.6 虚假控制流分析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E7%AB%A0%E4%BB%8B%E7%BB%8D"><span class="toc-text">文章介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Triton%E6%A1%86%E6%9E%B6%E7%AE%80%E4%BB%8B"><span class="toc-text">1.Triton框架简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E6%B1%A1%E7%82%B9%E5%BC%95%E6%93%8E"><span class="toc-text">1.1 污点引擎</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E7%AC%A6%E5%8F%B7%E5%BC%95%E6%93%8E"><span class="toc-text">1.2 符号引擎</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E7%94%A8SMT2-Lib%E8%A1%A8%E7%A4%BA%E8%AF%AD%E4%B9%89"><span class="toc-text">1.3 用SMT2-Lib表示语义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-%E7%AC%A6%E5%8F%B7%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E6%8A%BD%E8%B1%A1%E8%AF%AD%E6%B3%95%E6%A0%91"><span class="toc-text">1.4 符号表达式的抽象语法树</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-O-LLVM"><span class="toc-text">2.O-LLVM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E7%A1%AE%E5%AE%9A%E6%95%B0%E6%8D%AE%E5%85%A5%E5%8F%A3%E7%82%B9"><span class="toc-text">2.1 确定数据入口点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E9%9A%94%E7%A6%BB%E7%9A%84%E8%BF%BD%E8%B8%AA"><span class="toc-text">2.2 隔离的追踪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E7%AC%A6%E5%8F%B7%E5%8C%96%E7%BA%A6%E6%9D%9F"><span class="toc-text">2.3 符号化约束</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%9B%BF%E6%8D%A2%E6%B7%B7%E6%B7%86%E5%88%86%E6%9E%90"><span class="toc-text">2.4 表达式替换混淆分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-%E6%8E%A7%E5%88%B6%E6%B5%81%E5%B9%B3%E5%9D%A6%E5%8C%96%E6%B7%B7%E6%B7%86%E5%88%86%E6%9E%90"><span class="toc-text">2.5  控制流平坦化混淆分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-%E8%99%9A%E5%81%87%E6%8E%A7%E5%88%B6%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text">2.6 虚假控制流分析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
     </div>
   </div>
 
@@ -636,7 +636,7 @@ MathJax = {
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %5C%5B%E7%BF%BB%E8%AF%91%5C%5D%20%E4%BD%BF%E7%94%A8Triton%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E6%B7%B7%E6%B7%86%E4%BB%A3%E7%A0%81%20(How%20Triton%20may%20help%20to%20analyse%20obfuscated%20binaries) + '&url=' + https%3A%2F%2Fbai.re%2F2023%2F04%2F26%2FTranslate-How-Triton-may-help-to-analyse-obfuscated-binaries%2F + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %5B%E7%BF%BB%E8%AF%91%5D%20%E4%BD%BF%E7%94%A8Triton%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E6%B7%B7%E6%B7%86%E4%BB%A3%E7%A0%81%20(How%20Triton%20may%20help%20to%20analyse%20obfuscated%20binaries) + '&url=' + https%3A%2F%2Fbai.re%2F2023%2F04%2F26%2FTranslate-How-Triton-may-help-to-analyse-obfuscated-binaries%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
