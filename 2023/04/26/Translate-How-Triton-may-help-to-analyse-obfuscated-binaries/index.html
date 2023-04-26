@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="DiamondHunters" />
+  <meta name="description" content="" />
+  
+  
+  <title>
+    
+      \[翻译\] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries) 
+      
+      
+      |
+    
+     Dia的记事本
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcdn.net//ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcdn.net//ajax/libs/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+  <!---<script async src="//static.getclicky.com/101350277.js"></script>--->
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatarMe.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">Dia</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.alicdn.com/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">\[翻译\] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries)</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2023-04-26 14:24:33
+        </span>
+        
+      </div>
+      <div class="markdown-body">
+        <h2 id="文章介绍"><a href="#文章介绍" class="headerlink" title="文章介绍"></a>文章介绍</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">作者：Jonathan Salwan（@JonathanSalwan）和Romain Thomas（@rh0main）</span><br><span class="line">机构：Quarkslab Triton团队</span><br><span class="line">关键词：动态二进制分析/符号执行/SMT2-LIB/SMT-Solver/着色分析</span><br></pre></td></tr></table></figure>
+
+<p>由于triton中文资料不多，学习使用triton具有阻碍。在阅读外文文章时发现此文，由于是法语撰写且为<code>PDF</code>格式，机翻阅读较为困难。于是借助<code>gpt</code>进行翻译并在尽可能保持原文含义的情况下手动修改部分名词对应的中文为惯称。</p>
+<p>原文链接：<a target="_blank" rel="noopener" href="https://www.romainthomas.fr/publication/triton/">https://www.romainthomas.fr/publication/triton/</a></p>
+<p>———-以下为翻译内容———-</p>
+<p>在这项工作中，我们提出了一种基于恶意代码模式检测的二进制反混淆技术。我们利用了混淆器倾向于使用相似技术来混淆代码的属性，并将这些编码模式用作指示混淆的指标。二进制混淆用于保护程序中存在的知识产权。存在多种类型的混淆，但大体上是修改二进制结构，同时保持相同的原始语义。其目的是确保原始信息被“淹没”在大量无用信息中，从而使逆向工程变得更加耗时。在本文中，我们展示了如何使用Triton框架分析混淆代码以节省时间。</p>
+<h2 id="1-Triton框架简介"><a href="#1-Triton框架简介" class="headerlink" title="1.Triton框架简介"></a>1.<code>Triton</code>框架简介</h2><p> <code>Triton</code>[0]是一个动态符号执行（<code>DSE</code>，也称为混合符号执行）框架，于2015年与<code>Florent Saudel</code>一起在<code>SSTIC</code>上介绍。它被开发用于动态分析代码，无论是用于漏洞研究还是用于在混淆代码上提供逆向工程的帮助。 Triton框架由三个主要的“类别”组成，包括：</p>
+<ul>
+<li>动态二进制插桩（<code>DBI</code>）通过Pin实现。它的作用是获取与当前指令相关的具体上下文，然后将其传递给引擎。</li>
+<li>引擎执行分析（通过<code>taint</code>分析、符号执行、快照管理和将语义转换为<code>SMT2-Lib</code> [2]）。</li>
+<li>还包括一部分绑定，允许通过高级语言（如Python）控制引擎。</li>
+</ul>
+<p>引擎是Triton的核心，并被建模为可以相互通信并可以从Python绑定中受到用户控制。图1说明了Triton的整体设计。其中的一些引擎将在接下来的章节中描述，以更好地理解第2章。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426143222821.png" alt="图1"></p>
+<h3 id="1-1-色调引擎"><a href="#1-1-色调引擎" class="headerlink" title="1.1 色调引擎"></a>1.1 色调引擎</h3><p>色调分析(翻译标注：污点分析)可在执行过程中保持对特定数据变化的视图。通常，用户输入会被标记为受到色调影响，而色调引擎的作用是跟踪这些输入的变化（与输入交互的指令，这些输入存储在哪里以及如何传播等）。除了跟踪数据变化外，该分析在Triton中有四个优点：</p>
+<ul>
+<li>优点1：其第一个作用是帮助符号执行决定是否应该对内存地址的值进行符号处理或具体处理。通常，如果指令的源操作数未被标记，具体值就足够了。否则，当前值取决于用户指定的输入。因此，Triton使用源操作数的符号值。</li>
+<li>优点2：其第二个作用是特例。色调分析和符号执行都使用相同的输入。对于第一种情况，它们代表着污点的传播源。对于第二种情况，这些被标记污染的内存单元是符号变量，符号执行将基于内存的污染标记构建符号变量。一个被标记污染但符号引擎未知的内存单元表示一个新的输入，因此必须创建一个代表该输入的符号变量。</li>
+<li>优点3：污点还可以用作符号执行的过滤器。在跟踪期间，许多指令不会影响用户指定的输入（它们的操作数没有被标记）。因此，这些指令永远不会出现在路径条件的约束中。因此，没有必要对它们进行符号执行。通过污点分析实现的符号执行优化用于<code>MergePoint</code> [3]和<code>FuzzWin</code> [4]。</li>
+<li>优点4：最后，污点标记可以简单地用于可视化数据在执行中的传播。</li>
+</ul>
+<p>将数据（如寄存器或内存单元）使用Python 提供的函数绑定进行着色（标记污染）是很容易的。<code>API</code>提供了<code>taintReg()</code>或<code>taintMem()</code>等函数。然后，引擎的作用是根据指令的语义通过寄存器和内存传播污点。清单1是一个Triton代码示例，该示例在调用main函数时将控制台参数的所有字节标记为着色的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Listing 1 : 标记argv污点  </span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">mainAnalysis</span>(<span class="params">threadId</span>)</span></span><br><span class="line"><span class="function"> <span class="title">rdi</span> = <span class="title">getRegValue</span>(<span class="params">IDREF.REG.RDI</span>) # <span class="title">argc</span></span></span><br><span class="line"><span class="function"> <span class="title">rsi</span> = <span class="title">getRegValue</span>(<span class="params">IDREF.REG.RSI</span>) # <span class="title">argv</span></span></span><br><span class="line"><span class="function"> <span class="title">while</span> <span class="title">rdi</span> != 0:</span></span><br><span class="line"> argv = getMemValue(rsi+((rdi-<span class="number">1</span>)*<span class="number">8</span>), <span class="number">8</span>)</span><br><span class="line"> offset = <span class="number">0</span></span><br><span class="line"> <span class="keyword">while</span> getMemValue(argv+offset, <span class="number">1</span>) != <span class="number">0x00</span>:</span><br><span class="line"> taintMem(argv+offset)</span><br><span class="line"> offset += <span class="number">1</span></span><br><span class="line"> <span class="built_in">print</span> <span class="string">&#x27;[+] %03d bytes tainted from the argv [%d] (%#x)&#x27;</span> %(offset, rdi-<span class="number">1</span>, argv)</span><br><span class="line"> rdi -= <span class="number">1</span></span><br><span class="line"><span class="keyword">return</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="1-2-符号引擎"><a href="#1-2-符号引擎" class="headerlink" title="1.2 符号引擎"></a>1.2 符号引擎</h3><p>在符号执行领域，存在两个主要方向，即静态符号执行（<code>SSE</code>）和动态符号执行（<code>DSE</code>）。<code>SSE</code>和<code>DSE</code>的选择取决于您正在执行的分析类型和可用信息。SSE主要用于验证给定代码的属性，而<code>DSE</code>用于构建与执行控制流和变量演变相对应的约束条件。符号执行的作用是生成与程序、路径或数据演变相对应的逻辑公式。类似于符号计算，它基于符号变量（或符号）。在这里，变量这个词具有数学含义。它代表公式中的未知数。换句话说，它是一个“自由”变量，因此可以被任何值替换。符号引擎的作用是创建并保留所有符号表达式，然后为程序的每个点建立表达式与寄存器/内存之间的联系。每个符号表达式都有一个独特的ID（符号引用），它是唯一的。</p>
+<p>符号输入由<code>&lt;ID：Expr&gt;</code>对表示，这对组合保留在全局表达式集中。表达式可能包含对其他表达式的引用，这使我们可以将表达式保持在<code>SSA（Static Single Assignment）</code>[5]形式下。清单2说明了两个寄存器相加的表达式的<code>SMT2-Lib</code>表示形式。引用#40和#39表示分配给寄存器<code>RAX</code>和<code>RDX</code>的最后两个表达式。引用#41表示在执行此指令后，寄存器<code>RAX</code>的新表达式。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Listing 2 : ADD指令 SMT2-Lib 表达式</span><br><span class="line">Instruction: add rax, rdx</span><br><span class="line">Expressions: #41 = (bvadd ((_ extract 63 0) #40) ((_ extract 63 0) #39))</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-3-用SMT2-Lib表示语义"><a href="#1-3-用SMT2-Lib表示语义" class="headerlink" title="1.3 用SMT2-Lib表示语义"></a>1.3 用<code>SMT2-Lib</code>表示语义</h3><p> <code>SMT-Lib</code>的版本2（我们称之为<code>SMT2-Lib</code>）是一个国际倡议的延续，旨在促进对可满足性模理论（<code>SMT</code>）问题的研究和开发。许多<code>SMT</code>求解器都支持这个新版本。因此，我们将我们的语义和约束转换为这种语言，而不是使用<code>Z3</code>的C++接口，这样以后就可以使用任何支持这个标准的<code>SMT</code>求解器。</p>
+<h3 id="1-4-符号表达式的抽象语法树"><a href="#1-4-符号表达式的抽象语法树" class="headerlink" title="1.4 符号表达式的抽象语法树"></a>1.4 符号表达式的抽象语法树</h3><p> <code>Triton</code>将每个汇编指令转换为一个或多个<code>SMT2-Lib</code>表达式的列表。这种语言及其用途在前面的第1.3段中介绍过。一个<code>SMT2-Lib</code>公式是一个S表达式（symbolic expression，符号表达式），其语法与Lisp或Scheme语言非常相似。所有操作都是前缀形式的，并且一个良好形式的表达式都包含在括号中。</p>
+<p>每个公式都有一个唯一的标识符（ID）来代表它。如果一个公式A依赖于公式B的值，它将使用B的ID而不是另一个公式。这个唯一标识符的原则来自于SSA。在本文后续部分中，我们将称这些公式以及这种中间表示为“SSA表达式”。</p>
+<p>为了更轻松地操作这些表达式，所有表达式都可以通过抽象语法树（<code>AST</code>）进行操作。我们以清单3中的汇编代码片段为例。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Listing 3 : 汇编代码</span><br><span class="line">1. mov al, 1</span><br><span class="line">2. mov cl, 10</span><br><span class="line">3. mov dl, 20</span><br><span class="line">4. xor cl, dl</span><br><span class="line">5. add al, cl</span><br></pre></td></tr></table></figure>
+
+<p>在第5行，寄存器<code>AL</code>的<code>AST</code>由图2所示。该<code>AST</code>表示了从程序点1 → 5开始的AL寄存器的语义。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426150045896.png" alt="图2"></p>
+<p>从<code>Python API</code>中，可以创建和修改<code>AST</code>节点。清单4演示了这个功能。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Listing 4 :操作AST代码</span><br><span class="line"># Node information</span><br><span class="line">[IN] node = bvadd(bv(1, 8), bvxor(bv(10, 8), bv(20, 8)))</span><br><span class="line">[IN] print type(node)</span><br><span class="line">[OUT] &lt;type &#x27;SmtAstNode&#x27;&gt;</span><br><span class="line">[IN] print node</span><br><span class="line">[OUT] (bvadd (_ bv1 8) (bvxor (_ bv10 8) (_ bv20 8)))</span><br><span class="line">[IN] subchild = node.getChilds()[1].getChilds()[0]</span><br><span class="line">[IN] print subchild</span><br><span class="line">[OUT] (_ bv10 8)</span><br><span class="line">[IN] print subchild.getChilds()[0].getValue()</span><br><span class="line">[OUT] 10</span><br><span class="line">[IN] print subchild.getChilds()[1].getValue()</span><br><span class="line">[OUT] 8</span><br><span class="line"># Node modification</span><br><span class="line">[IN] node = bvadd(bv(1, 8), bvxor(bv(10, 8), bv(20, 8)))</span><br><span class="line">[IN] print node</span><br><span class="line">[OUT] (bvadd (_ bv1 8) (bvxor (_ bv10 8) (_ bv20 8)))</span><br><span class="line">[IN] node.setChild(0, bv(123, 8))</span><br><span class="line">[IN] print node</span><br><span class="line">[OUT] (bvadd (_ bv123 8) (bvxor (_ bv10 8) (_ bv20 8)))</span><br></pre></td></tr></table></figure>
+
+<p>还需要注意的是，在<code>Triton</code>的框架中，<code>AST</code>的<code>SMT2-Lib</code>语法已经稍微修改了。增加了<code>REFERENCE</code>类型的节点。这使我们能够更轻松地处理子图，并独立于父图且符合<code>SSA</code>。<code>REFERENCE</code>类型的节点是终止节点，但是引用了子图。图3说明了这个过程。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426150429279.png" alt="图3"></p>
+<p>由于<code>REFERENCE</code>类型的节点是终止节点，<code>API</code>提供了可以重新构建包含引用的表达式完整图的功能。为此，Triton遍历初始表达式，并递归地替换所有<code>REFERENCE</code>类型的节点为其各自的图。下面的清单5演示了从<code>API</code>重建图的过程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Listing 5 : 重建含有REFERENCE节点的图</span><br><span class="line">[IN] zfId = getRegSymbolicID(IDREF.FLAG.ZF)</span><br><span class="line">[IN] partialGraph = getSymExpr(zfId).ast</span><br><span class="line">[IN] print partialGraph</span><br><span class="line">[OUT] (ite (= #89 (_ bv0 32)) (_ bv1 1) (_ bv0 1))</span><br><span class="line">[IN] fullGraph = getFullExpression(partialGraph)</span><br><span class="line">[IN] print fullGraph</span><br><span class="line">[OUT] (ite (= (bvsub ((_ extract 31 0) ((_ zero_extend 32) ((_ extract</span><br><span class="line">31 0) ((_ zero_extend 3</span><br><span class="line">0) ((_ zero_extend 32) (bvsub ((_ extract 31 0) ((_ zero_extend 32) ((_</span><br><span class="line">sign_extend 24) ((_ ex</span><br><span class="line">_ bv1 32)))) (_ bv85 32)))))) ((_ extract 31 0) ((_ zero_extend 32) ((_</span><br><span class="line">sign_extend 24) ((_ ex</span><br><span class="line">d 32) ((_ zero_extend 24) ((_ extract 7 0) (_ bv49 8))))))))) (_ bv0</span><br><span class="line">32)) (_ bv1 1) (_ bv0 1))</span><br></pre></td></tr></table></figure>
+
+<p>（翻译注：<code>Triton</code>使用<code>AST</code>作为中间表示来表示指令的语义，这使得其可以进行符号执行，进行数据流分析和其他静态分析，同时也可以将其与<code>SMT solver</code>集成，以解决关于二进制程序的复杂问题。）</p>
+<h2 id="2-O-LLVM"><a href="#2-O-LLVM" class="headerlink" title="2.O-LLVM"></a>2.<code>O-LLVM</code></h2><p>在本章中，我们将展示如何使用Triton来定位和分离所需的信息，而不必担心混淆。我们将使用<code>Obfuscator-LLVM</code>的免费解决方案进行演示。<code>O-LLVM</code>基于<code>LLVM IR</code>，并提供了三种类型的Pass</p>
+<ol>
+<li>替换(Substitution)，它将逻辑操作的标准形式替换为位操作[7]。</li>
+<li>虚假控制流(Bogus Control Flow)，它在原始的基本块之前添加基本块，并设置不透明谓词来指向原始基本块[8]。</li>
+<li>控制流平坦化(Control Flow Flattening)，它将控制流图(<code>CFG</code>)平坦化[9,10]。</li>
+</ol>
+<p>为了简单地说明 Triton 中的功能如何帮助分析师分析混淆的二进制文件，我们编译了一个包含 <code>O-LLVM</code> 所有选项 (<code>-mllvm -sub -mllvm -fla -mllvm -bcf</code>) 的简单二进制文件。编译后的二进制文件需要输入一个有效密码，其 <code>CFG</code> 如图4所示。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426151025898.png" alt="图4"></p>
+<p>请注意，<code>O-LLVM</code>的保护分析已经在<code>Francis Gabriel</code>和<code>Camille Mougey</code>的文章中进行过描述[19]。该分析是基于<code>Miasm</code>框架[20]的静态分析实现的。我们提供了另一种基于动态分析的方法（两种方法互补）。</p>
+<h3 id="2-1-确定数据入口点"><a href="#2-1-确定数据入口点" class="headerlink" title="2.1 确定数据入口点"></a>2.1 确定数据入口点</h3><p>在逆向工程中，主要的重点是查找信息并理解这些信息的处理方式。而代码混淆则是为了尽可能地使这两个原则变得更加困难。</p>
+<p>在开始分析之前，我们需要找到用户数据。这样可以为真正有趣的内容提供一个分析起点。我们知道，从用户处接收的数据最初以明文形式存储在内存中。因此，我们开发了一个 Triton 工具 [11]，它可以列出所有的内存访问，从而确定第一个将获取用户数据的指令——这为我们提供了一个分析起点。</p>
+<p>列表6呈现了工具的输出结果。输入 <code>A</code>（<code>0x41</code>）被作为目标程序的参数，可以看出，处于<code>0x4008c1</code>的指令是第一条处理该输入的指令。我们现在可以从这个地址开始我们的分析。根据经验，在执行网络通信或解析时，这种搜索方法非常有用。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426151601728.png" alt="列表6"></p>
+<h3 id="2-2-隔离的追踪"><a href="#2-2-隔离的追踪" class="headerlink" title="2.2 隔离的追踪"></a>2.2 隔离的追踪</h3><p>找到处理用户输入的第一条指令是一件事，但是隔离所有与用户输入相关的指令则是另一回事。为了能够在执行过程中跟踪用户数据，Triton提供了一种污点引擎。</p>
+<p>通过污点分析，可以在某个时刻标记数据，然后根据每条指令的语义，在执行过程中将标记传播到寄存器和内存中。在处理混淆的二进制文件时，这种方法可以节省宝贵的分析时间。</p>
+<p>为了能够离线处理跟踪，我们开发了一个Triton工具[12]，用于将跟踪的整个执行上下文保存在数据库中，数据库的结构如清单7所示。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426152200931.png" alt="清单7"></p>
+<p>在标记用户输入点（第2.1章）后，将创建一个包含有关跟踪的所有信息的数据库，包括可以被用户控制的表达式（清单8）</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426152250712.png" alt="清单8"></p>
+<p>拥有包含执行上下文信息的数据库可以辅助逆向工程。我们已经开发了一个IDA插件，可以将Triton的动态信息与IDA的静态信息相结合，如显示着色、每个指令中寄存器的值、代码覆盖等等。如图5所示，通过着色分析可以快速定位我们感兴趣的指令。我们还注意到，尽管进行了混淆，数据流并没有传播到所有基本块中，这使得我们可以更容易地针对符号分析进行目标定位。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426152405269.png" alt="图5"></p>
+<h3 id="2-3-符号化约束"><a href="#2-3-符号化约束" class="headerlink" title="2.3 符号化约束"></a>2.3 符号化约束</h3><p>在定位与用户输入有交互的代码块（清单9）之后，可以对该代码块进行符号执行，从用户输入点作为符号变量开始，直到达到所需的约束条件。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Listing 9 : 由污点分析分离出的代码片</span><br><span class="line">.text:00000000004008C1 movsx r9d, byte ptr [r8+rdi]</span><br><span class="line">.text:00000000004008C6 sub r9d, 2BCF64A4h</span><br><span class="line">.text:00000000004008CD sub r9d, 1</span><br><span class="line">.text:00000000004008D4 add r9d, 2BCF64A4h</span><br><span class="line">.text:00000000004008DB mov r10d, r9d</span><br><span class="line">.text:00000000004008DE xor r10d, 0FFFFFFFFh</span><br><span class="line">.text:00000000004008E5 and r10d, 0C764C206h</span><br><span class="line">.text:00000000004008EC mov r11d, esi</span><br><span class="line">.text:00000000004008EF xor r11d, 0C764C206h</span><br><span class="line">.text:00000000004008F6 and r9d, r11d</span><br><span class="line">.text:00000000004008F9 xor esi, 55h</span><br><span class="line">.text:00000000004008FF and esi, 0C764C206h</span><br><span class="line">.text:0000000000400905 and r11d, 55h</span><br><span class="line">.text:000000000040090C or r10d, r9d</span><br><span class="line">.text:000000000040090F or esi, r11d</span><br><span class="line">.text:0000000000400912 xor r10d, esi</span><br><span class="line">.text:0000000000400915 movsxd rdi, [rbp+index]</span><br><span class="line">.text:0000000000400919 mov r8, serial</span><br><span class="line">.text:0000000000400921 movsx esi, byte ptr [r8+rdi]</span><br><span class="line">.text:0000000000400926 cmp r10d, esi</span><br></pre></td></tr></table></figure>
+
+<p>符号执行可以帮助我们解决一个或多个约束（例如，密码中的每个字符），而不必担心理解程序的语义——这在混淆的环境中，是节省分析人员时间的一种方式。<code>Triton</code>正是为了能够在两个点之间应用符号分析而设计的。为此，需要首先在第一个点声明一个符号变量（清单10），然后在第二个点创建一个约束（清单11），最后请求一个满足约束条件的求解器模型（清单12）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Listing 10 : 在R9寄存器上创建符号变量</span><br><span class="line">if instruction.getAddress() == 0x4008C1:</span><br><span class="line"> convertRegToSymVar(IDREF.REG.R9, 64)</span><br><span class="line">Listing 11 : 在 ZF 标志寄存器上创建约束</span><br><span class="line">if instruction.getAddress() == 0x400926:</span><br><span class="line"> zfId = getRegSymbolicID(IDREF.FLAG.ZF)</span><br><span class="line"> zfExpr = getFullExpression(getSymExpr(zfId).getAst())</span><br><span class="line"> # zf == 1</span><br><span class="line"> constraint = smt2lib.smtAssert(</span><br><span class="line"> smt2lib.equal(</span><br><span class="line"> zfExpr,</span><br><span class="line"> smt2lib.bvtrue()</span><br><span class="line"> )</span><br><span class="line"> )</span><br><span class="line">Listing 12 : model的还原</span><br><span class="line">model = getModel(constraint)[&#x27;SymVar_0&#x27;]</span><br><span class="line">print ctypes.c_int32(model)</span><br></pre></td></tr></table></figure>
+
+<p>获得的<code>model</code>对应于期望密码的第一个字符。通过重复这个过程或者使用回放引擎[13]自动化这个过程，密码可以在很短的时间内被发现（不到一秒）。这个操作也可以应用于简单的哈希函数[14]。</p>
+<h3 id="2-4-表达式替换混淆分析"><a href="#2-4-表达式替换混淆分析" class="headerlink" title="2.4 表达式替换混淆分析"></a>2.4 表达式替换混淆分析</h3><p>往往在混淆的代码中，通过求解符号约束以获取特定分支、恢复密钥或甚至<del>生成冲突</del>（不懂）并非是全部目标。在某些情况下，恢复原始算法并简化混淆表达式是很有意义的。</p>
+<p>有几种方法可以用来隐藏逻辑操作。最常见的是按位操作（bitwise operation [15]，请参见清单13），但还有更复杂的操作，如混合布尔算术（Mixed Boolean-Arithmetic，MBA）[16]。</p>
+<p>在<code>O-LLVM</code>中，逻辑操作被转换为按位操作。为了简化表达式，首先需要分离表示按位操作的原子模式（<code>pattern</code>）。一旦分离出模式，目标是创建一个输入为模式树的转换，并返回一个简化的新树。对于每个转换，需要证明输出树的结果对于Z中的所有x都等于输入树的结果。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Listing 13 : xor可能的代换位操作 [17]</span><br><span class="line">a ⊕ b = (a ∧ ¬b) ∨ (¬a ∧ b)</span><br><span class="line">a ⊕ b = ((a ∧ ¬b) ∨ ¬a) ∧ ((a ∧ ¬b) ∨ b)</span><br><span class="line">a ⊕ b = ((a ∨ ¬a) ∧ (¬b ∨ ¬a)) ∧ ((a ∨ b) ∧ (¬b ∨ b))</span><br><span class="line">a ⊕ b = (¬a ∨ ¬b) ∧ (a ∨ b)</span><br><span class="line">a ⊕ b = ¬(a ∧ b) ∧ (a ∨ b)</span><br></pre></td></tr></table></figure>
+
+<p>重新审视清单9中的代码，并使用Triton提取出符号表达式，我们得到以下混淆表达式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Listing 14 : 来自 listing 9 的表达式</span><br><span class="line">e = (((((((SymVar_0 − 735012004) − 1) + 735012004)</span><br><span class="line">⊕ 18446744073709551615) ∧ 18446744072759853574) ∨</span><br><span class="line">((((SymVar_0 − 735012004) − 1) + 735012004) ∧ (4294967295</span><br><span class="line">⊕ 18446744072759853574))) ⊕ (((4294967295 ⊕ 85) ∧</span><br><span class="line">18446744072759853574) ∨ ((4294967295 ⊕ 18446744072759853574) ∧</span><br><span class="line">85)))</span><br></pre></td></tr></table></figure>
+
+<p>在这个表达式中，可以分离出多个模式。最容易分离的模式是 <code>((a − b) − 1) + b)</code> ，可以通过操作 <code>(a − 1)</code> 进行代换（证明1）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">证明 1 : ((a − b) − 1) + b) = (a − 1)</span><br><span class="line">&gt;&gt;&gt; a,b,c = BitVecs(&#x27;a b c&#x27;, 64)</span><br><span class="line">&gt;&gt;&gt; e1 = (c == ((a-b)-1)+b)</span><br><span class="line">&gt;&gt;&gt; e2 = (c == (a-1))</span><br><span class="line">&gt;&gt;&gt; prove(e1 == e2)</span><br><span class="line">proved</span><br></pre></td></tr></table></figure>
+
+<p>一旦替换完成，得到的表达式如图6所示。为了更好的可读性，该表达式被分为两部分。同时，我们也知道形如 <code>a ⊕ UINT64_MAX</code> 的表达式可以被转换为 <code>¬a</code>（证明2）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">证明 2 : (a ⊕ UINT64_MAX) = ¬a</span><br><span class="line">&gt;&gt;&gt; a,b = BitVecs(&#x27;a b&#x27;, 64)</span><br><span class="line">&gt;&gt;&gt; e1 = (b == a^0xffffffffffffffff)</span><br><span class="line">&gt;&gt;&gt; e2 = (b == ~a)</span><br><span class="line">&gt;&gt;&gt; prove(e1 == e2)</span><br><span class="line">proved</span><br></pre></td></tr></table></figure>
+
+<p>进行此转换后，我们可以发现在每个部分中，模式 <code>(¬a∧b)∨(a∧¬b)</code> 出现了两次。因此，完整的表达式为：<code>(¬a∧b)∨(a∧¬b)⊕(¬c∧b)∨(c∧¬b)</code>。每个部分的模式都是 ⊕ 的按位操作（参见清单13的第一个操作）。因此，每个部分都可以通过 a ⊕ b 进行代换（证明3）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">证明 3 : (¬a ∧ b) ∨ (a ∧ ¬b) = (a ⊕ b)</span><br><span class="line">&gt;&gt;&gt; a,b,c = BitVecs(&#x27;a b c&#x27;, 64)</span><br><span class="line">&gt;&gt;&gt; e1 = (c == ((~a &amp; b) | (a &amp; ~b)))</span><br><span class="line">&gt;&gt;&gt; e2 = (c == (a ^ b))</span><br><span class="line">&gt;&gt;&gt; prove(e1 == e2)</span><br><span class="line">proved</span><br></pre></td></tr></table></figure>
+
+<p>应用此转换后，我们得到以下表达式：<code>(a⊕b) ⊕ (c⊕b)</code>，它可以转换为 <code>a ⊕ c</code>（证明4）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">证明 4 : (a ⊕ b) ⊕ (c ⊕ b) = (a ⊕ c)</span><br><span class="line">&gt;&gt;&gt; a,b,c,d = BitVecs(&#x27;a b c d&#x27;, 64)</span><br><span class="line">&gt;&gt;&gt; e1 = (d == ((a ^ b) ^ (c ^ b)))</span><br><span class="line">&gt;&gt;&gt; e2 = (d == a ^ c)</span><br><span class="line">&gt;&gt;&gt; prove(e1 == e2)</span><br><span class="line">proved</span><br></pre></td></tr></table></figure>
+
+<p>这种类型的转换在<code>SMT</code>求解器中是很常见的，因此可以很容易地进行简化，而无需进行模式匹配（简化1）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">简化 1 : (a ⊕ b) ⊕ (c ⊕ b) → (a ⊕ c)</span><br><span class="line">&gt;&gt;&gt; a,b,c,d = BitVecs(&#x27;a b c d&#x27;, 64)</span><br><span class="line">&gt;&gt;&gt; e1 = (d == ((a ^ b) ^ (c ^ b)))</span><br><span class="line">&gt;&gt;&gt; simplify(e1)</span><br><span class="line">d == a ^ c</span><br></pre></td></tr></table></figure>
+
+<p>因此，可以得出结论，清单9中混淆过的表达式可以通过表达式 <code>((SymVar0 − 1) ⊕ 85)</code> 进行简化表示。</p>
+<p>在<code>O-LLVM</code>框架中，按位操作的标准形式已知 [18]，因此可以很容易地通过从<code>AST</code>中进行模式匹配来将其分离和简化。最复杂的情况是按位操作的标准形式未知。这正是<code>Adrien Guinet</code>进行的位运算符号计算的研究领域。通过在特定空间中简化这些操作，可以相对容易地识别出纯布尔运算。至于算术运算，通过某些启发式算法，可以找到比原始版本更容易理解的版本。</p>
+<h3 id="2-5-控制流平坦化混淆分析"><a href="#2-5-控制流平坦化混淆分析" class="headerlink" title="2.5  控制流平坦化混淆分析"></a>2.5  控制流平坦化混淆分析</h3><p>图平坦化（<code>graph flattening</code>）是一种常见的静态分析保护措施。它的目的是将基本块“展开”，以便其关系不再可见。为了更好地理解其工作原理，我们采用清单15的代码作为例子。其<code>CFG</code>由图7所示。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">Listing <span class="number">15</span> : 示例代码</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">foo</span><span class="params">(<span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"> <span class="keyword">int</span> val;</span><br><span class="line"> <span class="comment">/* Basic block 0 */</span></span><br><span class="line"> <span class="keyword">if</span> (n == <span class="number">1</span>)</span><br><span class="line"> <span class="comment">/****************/</span></span><br><span class="line"><span class="comment">/* basic block 1 */</span></span><br><span class="line">val = <span class="number">10</span>;</span><br><span class="line"><span class="comment">/****************/</span></span><br><span class="line"> <span class="comment">/* basic block 2 */</span></span><br><span class="line"> <span class="keyword">if</span> (n == <span class="number">2</span>)</span><br><span class="line"> <span class="comment">/*****************/</span></span><br><span class="line"><span class="comment">/* basic block 3 */</span></span><br><span class="line">val = <span class="number">20</span>;</span><br><span class="line"><span class="comment">/****************/</span></span><br><span class="line"> <span class="comment">/* basic block 4 */</span></span><br><span class="line"> val = <span class="number">30</span>;</span><br><span class="line"> <span class="comment">/****************/</span></span><br><span class="line"> <span class="comment">/* basic block 5 */</span></span><br><span class="line"> <span class="keyword">return</span> val;</span><br><span class="line"> <span class="comment">/****************/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426155751870.png" alt="图7"></p>
+<p>控制流平坦化会修改<code>CFG</code>，以便不再显示不同基本块之间的关系。为此，该图将被转换为类似于状态机的形式。转换后的图形代码可能类似于清单16，并且其图形由图8所示。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">Listing <span class="number">16</span> : 清单<span class="number">15</span>经过控制流平坦化后的示例代码</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> END_STATE 100</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">foo</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line"> <span class="keyword">int</span> next_state, current_state;</span><br><span class="line"> <span class="keyword">int</span> return_value;</span><br><span class="line"> current_state = <span class="number">0</span>;</span><br><span class="line"> <span class="keyword">while</span>(current_state != END_STATE) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">switch</span>(current_state)&#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">case</span> <span class="number">0</span>: <span class="comment">//basic block 0</span></span><br><span class="line"> <span class="keyword">if</span> (n == <span class="number">1</span>)</span><br><span class="line"> next_state = <span class="number">1</span>;</span><br><span class="line"> <span class="keyword">else</span></span><br><span class="line"> next_state = <span class="number">2</span>;</span><br><span class="line"> <span class="keyword">break</span>;</span><br><span class="line"> <span class="keyword">case</span> <span class="number">1</span>: <span class="comment">//basic block 1</span></span><br><span class="line"> return_value = <span class="number">10</span>;</span><br><span class="line"> next_state = END_STATE;</span><br><span class="line"> <span class="keyword">break</span>;</span><br><span class="line"> <span class="keyword">case</span> <span class="number">2</span>: <span class="comment">//basic block 2</span></span><br><span class="line"> <span class="keyword">if</span> (n == <span class="number">2</span>)</span><br><span class="line"> next_state = <span class="number">3</span>;</span><br><span class="line"> <span class="keyword">else</span></span><br><span class="line"> next_state = <span class="number">4</span>;</span><br><span class="line"> <span class="keyword">break</span>;</span><br><span class="line"> <span class="keyword">case</span> <span class="number">3</span>: <span class="comment">//basic block 3</span></span><br><span class="line"> return_value = <span class="number">20</span>;</span><br><span class="line"> next_state = <span class="number">5</span>;</span><br><span class="line"> <span class="keyword">break</span>;</span><br><span class="line"> <span class="keyword">case</span> <span class="number">4</span>: <span class="comment">//basic block 4</span></span><br><span class="line"> return_value = <span class="number">30</span>;</span><br><span class="line"> next_state = <span class="number">5</span>;</span><br><span class="line"> <span class="keyword">break</span>;</span><br><span class="line"> <span class="keyword">case</span> <span class="number">5</span>: <span class="comment">//basic block 5</span></span><br><span class="line"> <span class="keyword">return</span> return_value;</span><br><span class="line"> next_state = END_STATE;</span><br><span class="line"> <span class="keyword">break</span>;</span><br><span class="line"> &#125;</span><br><span class="line"> current_state = next_state;</span><br><span class="line"> &#125;</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426155915133.png" alt="图8"></p>
+<p>通常，<code>CFG</code>类似于一个大型switch语句，其可能的值是状态，其内容表示原始的基本块。 对于<code>O-LLVM</code>的图形平坦化，状态之间的转换并不像清单16的示例那么简单，但原理仍然相同。通过其图形（图8），我们可以看到其具有与图9相同的结构，可以利用<code>Triton</code>的符号执行和污点引擎以以下方式帮助我们找到基本块之间的关系：</p>
+<ul>
+<li>在程序的开头，我们将其输入为标记污点。这可能是参数，文件，系统调用等。</li>
+<li>接下来，我们继续执行程序，直到到达原始图形的基本块。请注意，我们假设已经确定了程序原始的基本块（或至少是其中的一部分），并且只需要查找它们之间的关系。</li>
+<li>在已识别的基本块中，如果一条指令调用了一个标记为污染的内容（内存地址或寄存器），则将其转换为符号变量。这样可以避免在整个程序上进行符号执行，而只需在感兴趣的部分上执行。通过这种方式，符号表达式的大小减小了，并且更容易进行分析。</li>
+<li>在基本块结束时，我们根据符号变量获取所有可能的状态。由于每个状态对应一个基本块，因此我们获得了所需的关系。由于条件是符号变量的值，因此为了找到状态和基本块之间的对应关系，可以使用Triton的快照引擎。这使我们能够在程序开头注入所需的状态，并查看我们到达了哪个基本块。</li>
+</ul>
+<h3 id="2-6-虚假控制流分析"><a href="#2-6-虚假控制流分析" class="headerlink" title="2.6 虚假控制流分析"></a>2.6 虚假控制流分析</h3><p>Bogus Control Flow也是一种防止静态代码分析的保护措施。它通过添加永远不会在程序执行期间到达的基本块并与原始图的基本块混合在一起，使得很难区分哪些是可执行的，哪些是不可执行的。具体而言，<code>O-LLVM</code>插入了一个不透明的谓词，用于进行条件跳转。由于这个谓词具有常量值（真或假）且独立于程序输入，因此跳转执行后的指令地址将始终保持不变。</p>
+<p>这个谓词是使用两个变量 X 和 Y 构建的。因为在二进制中有控制流混淆，所以图中并没有跳转到某个地址，而是状态的改变。让我们来看看地址为<code>0x400816</code>的基本块（图10）的情况。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426161403959.png" alt="图10"></p>
+<p>我们可以看到，这里使用了两个状态，但其中一个状态永远不会被放入状态变量中。条件是通过<code>CMOVNZ</code>指令实现的，如果<code>R15B</code>不等于1，则将状态2（<code>0x7d094355</code>）放入<code>EAX</code>中，否则将状态1（<code>0x621af252</code>）放入其中。因此，<code>R15B</code>包含不透明谓词的公式，而<code>EAX</code>包含状态。因此，我们可以对包含变量X和Y的<code>EDI</code>和<code>R8D</code>寄存器进行符号执行，然后查看是否存在一种解决方案，使<code>EAX</code>等于状态1或2。由于这是一个不透明的谓词，只有两个状态中的一个会有解决方案。</p>
+<p>以下是Triton如何帮助我们分析这些块的方法。我们定义了两个变量X和Y的地址（清单17）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Listing 17 : 定义x,y的地址</span><br><span class="line">X_ADDR = 0x60204C</span><br><span class="line">Y_ADDR = 0x602050</span><br></pre></td></tr></table></figure>
+
+<p>然后，我们定义要分析的基本块的地址列表（清单18）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Listing 18 : 定义基本块列表</span><br><span class="line">BB_LIST = [</span><br><span class="line"> 0x400C9B, 0x400B5D, 0x400B51, 0x4007FA,</span><br><span class="line"> 0x4009C3, 0x4009F1, 0x4007F5, 0x4008A8,</span><br><span class="line"> 0x4009DE, 0x400816, 0x400CAD, 0x400AAE,</span><br><span class="line"> 0x400CB9, 0x400A12, 0x400BF9, 0x400CCC]</span><br></pre></td></tr></table></figure>
+
+<p>最后，我们指定了分发块的地址，因为我们确信在这个基本块中已经计算出了状态（清单19）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Listing 19 : 指定分发块地址</span><br><span class="line">END_BLOCK = 0x400CD3</span><br><span class="line">enabled = False</span><br></pre></td></tr></table></figure>
+
+<p>“<code>enabled</code>“是一个变量，用于指示我们是否在由Bogus Control Flow修改的基本块中。第一个类型为<code>AFTER</code>（在指令之后调用）的回调用于将用于包含变量X和Y的寄存器转换为符号变量（清单20）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Listing 20 : 将寄存器转换为符号变量</span><br><span class="line">def cafter(instruction):</span><br><span class="line"> global enabled</span><br><span class="line"> if len(instruction.getOperands()) == 2 and \</span><br><span class="line"> instruction.getOperands()[1].getType() == IDREF.</span><br><span class="line">OPERAND.MEM_R and \</span><br><span class="line"> (instruction.getOperands()[1].getMem().getAddress()</span><br><span class="line">== X_ADDR or instruction.getOperands()[1].getMem().getAddress() ==</span><br><span class="line">Y_ADDR):</span><br><span class="line"> reg = instruction.getOperands()[0].getReg()</span><br><span class="line"> convertRegToSymVar(reg.getId(), 64)</span><br><span class="line"> enabled = True</span><br><span class="line"> return</span><br></pre></td></tr></table></figure>
+
+<p><code>if</code>语句中的条件检查指令是否读取了其中一个变量的内存地址。此外，由于基本块使用变量X和Y，因此我们处于虚假控制流中所以将<code>enabled</code>置位<code>True</code>。</p>
+<p>第二个类型为BEFORE（在指令之前调用）的回调将用于确定将永远不使用哪个状态（清单21）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Listing 21 : 确定两种可能性</span><br><span class="line">def cbefore(instruction):</span><br><span class="line"> global enabled</span><br><span class="line"> if instruction.getAddress() in BB_LIST:</span><br><span class="line"> print &quot;Dans le basic block&quot;, hex(instruction.getAddress())</span><br><span class="line"> if instruction.getAddress() == END_BLOCK and enabled:</span><br><span class="line"> EtatSymId = getRegSymbolicID(IDREF.REG.RAX)</span><br><span class="line"> node = getFullExpression(getSymExpr(EtatSymId).getAst())</span><br><span class="line"> state1, state2 = getStates(node)</span><br></pre></td></tr></table></figure>
+
+<p>“<code>EtatSymId</code>“包含符号表达式的标识符。”<code>GetFullExpression</code>“将返回完整的<code>SMT</code>表达式，而”<code>GetState</code>“将解析<code>AST</code>以提取两个可能的状态。需要注意的是，代码使用了存储在<code>RAX</code>中的符号表达式，而不是存储在变量”<code>etat</code>“中的表达式。这不会影响代码的一般性，因为在所有基本块中，在将状态存入内存之前，状态都位于寄存器<code>EAX</code>中。</p>
+<p>然后，需要确定哪个状态将永远不会被使用。为此，我们尝试为两个可能的状态求解方程。如果方程无解，则表示该状态不可访问（清单22）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Listing 22 : 确定不可达的状态</span><br><span class="line">expr = smt2lib.smtAssert(smt2lib.equal(node, smt2lib.bv(state1, 32)))</span><br><span class="line">modelsState1 = getModel(expr)</span><br><span class="line">expr = smt2lib.smtAssert(smt2lib.equal(node, smt2lib.bv(state2, 32)))</span><br><span class="line">modelsState2 = getModel(expr)</span><br><span class="line">if len(modelsState1) &gt; 0 and len(modelsState2) == 0:</span><br><span class="line"> print &quot;L&#x27;Etat 0x%x ne peut pas etre atteint&quot;%(state2)</span><br><span class="line">if len(modelsState1) == 0 and len(modelsState2) &gt; 0:</span><br><span class="line"> print &quot;L&#x27;Etat 0x%x ne peut pas etre atteint&quot;%(state1)</span><br></pre></td></tr></table></figure>
+
+<p>通过查找状态和基本块之间的对应关系，我们可以找到无法访问的基本块。最后，我们对所有寄存器和内存地址进行具体化，以避免出现级联符号表达式（清单23）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Listing 23 : 具体化寄存器和内存</span><br><span class="line">concretizeAllMem()</span><br><span class="line">concretizeAllReg()</span><br><span class="line">enabled = False</span><br></pre></td></tr></table></figure>
+
+<p>在二进制文件上执行这个脚本[21]的结果如清单24所示。</p>
+<p><img src="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/image-20230426162422710.png" alt="image-20230426162422710"></p>
+<p>前面的结果并不是无法访问状态的详尽列表，而只是在执行过程中遇到的状态。使用其他输入（在我们的情况下是其他参数）进行执行可能会产生更多（或更少）的不可访问状态。由于这些保护措施是针对静态分析的，因此动态分析“正常”能够解决这些问题。然而，与静态分析不同，动态分析不能够全面分析，因为它的分析基于执行跟踪。但是，它可以访问上下文，因此可以更轻松地针对并分析程序的某些部分</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p> Triton是一个二进制分析框架，提供了额外的组件来帮助逆向工程。在这篇文章中，我们试图展示使用Triton分析混淆代码的用例，但是Triton也可以用于调试或漏洞研究。需要注意的是，所分析的保护措施（<code>O-LLVM</code>）是一种公共保护措施，这使得反混淆更容易。实际上，对于一种保护措施来说，真正的挑战在于在公开其工作原理的同时保持相当难以分析。同时需要认识到，保护措施并不是为了防止分析，而只是为了减缓分析的速度。例如，如果我们以游戏为例，并假设对于游戏发行商来说，最大的利润是在游戏发行的第一周内，那么保护措施至少需要保持一周，并且在保护措施上花费的成本必须与获得的利润成比例。</p>
+<p>致谢：<br>感谢Aurélien Wailly邀请我撰写本文。</p>
+<p>参考资料：<br>[0] <a target="_blank" rel="noopener" href="http://triton.quarkslab.com/">http://triton.quarkslab.com</a><br>[1] <a target="_blank" rel="noopener" href="https://www.sstic.org/2015/presentation/triton_dynamic_symbolic_execution_and_runtime_analysis/">https://www.sstic.org/2015/presentation/triton_dynamic_symbolic_execution_and_runtime_analysis/</a><br>[2] <a target="_blank" rel="noopener" href="http://smt-lib.org/">http://smt-lib.org</a><br>[3] Thanassis Avgerinos, Alexandre Rebert, Sang Kil Cha, and David Brumley. Enhancing symbolic execution with veritesting.<br>[4] <a target="_blank" rel="noopener" href="https://github.com/piscou/FuzzWin/">https://github.com/piscou/FuzzWin/</a><br>[5] <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Static_single_assignment_form">https://en.wikipedia.org/wiki/Static_single_assignment_form</a><br>[6] <a target="_blank" rel="noopener" href="http://o-llvm.org/">http://o-llvm.org</a><br>[7] <a target="_blank" rel="noopener" href="https://github.com/obfuscator-llvm/obfuscator/wiki/Instructions%20Substitution">https://github.com/obfuscator-llvm/obfuscator/wiki/Instructions%20Substitution</a><br>[8] <a target="_blank" rel="noopener" href="https://github.com/obfuscator-llvm/obfuscator/wiki/Bogus%20Control%20Flow">https://github.com/obfuscator-llvm/obfuscator/wiki/Bogus%20Control%20Flow</a><br>[9] <a target="_blank" rel="noopener" href="https://github.com/obfuscator-llvm/obfuscator/wiki/Control%20Flow%20Flattening">https://github.com/obfuscator-llvm/obfuscator/wiki/Control%20Flow%20Flattening</a><br>[10] T László and Á Kiss, Obfuscating C++ programs via control flow flattening, Annales Univ. Sci. Budapest., Sect. Comp. 30 (2009) 3-19.<br>[11] <a target="_blank" rel="noopener" href="http://triton.quarkslab.com/documentation/tools/#3">http://triton.quarkslab.com/documentation/tools/#3</a><br>[12] <a target="_blank" rel="noopener" href="http://triton.quarkslab.com/documentation/tools/#4">http://triton.quarkslab.com/documentation/tools/#4</a><br>[13] <a target="_blank" rel="noopener" href="http://triton.quarkslab.com/documentation/examples/#10">http://triton.quarkslab.com/documentation/examples/#10</a><br>[14] <a target="_blank" rel="noopener" href="http://triton.quarkslab.com/blog/first-approach-with-the-framework/#5.2">http://triton.quarkslab.com/blog/first-approach-with-the-framework/#5.2</a><br>[15] <a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Bitwise_operation">http://en.wikipedia.org/wiki/Bitwise_operation</a><br>[16] Yongxin Zhou, Alec Main, Yuan Xiang Gu, and Harold Johnson. Information hiding in software with mixed boolean-arithmetic transforms<br>[17] <a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Exclusive_or">http://en.wikipedia.org/wiki/Exclusive_or</a><br>[18] <a target="_blank" rel="noopener" href="https://goo.gl/noulwm">https://goo.gl/noulwm</a><br>[19] <a target="_blank" rel="noopener" href="http://blog.quarkslab.com/deobfuscation-recovering-an-ollvm-protected-program.html">http://blog.quarkslab.com/deobfuscation-recovering-an-ollvm-protected-program.html</a><br>[20] <a target="_blank" rel="noopener" href="https://github.com/cea-sec/miasm">https://github.com/cea-sec/miasm</a><br>[21] <a target="_blank" rel="noopener" href="http://triton.quarkslab.com/files/break_ollvm_bcf.py">http://triton.quarkslab.com/files/break_ollvm_bcf.py</a></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2023/02/23/cuttlefish-and-redroid-on-rock5b/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2023-04-26 14:24:33
+            </span>
+            
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E7%AB%A0%E4%BB%8B%E7%BB%8D"><span class="toc-text">文章介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Triton%E6%A1%86%E6%9E%B6%E7%AE%80%E4%BB%8B"><span class="toc-text">1.Triton框架简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E8%89%B2%E8%B0%83%E5%BC%95%E6%93%8E"><span class="toc-text">1.1 色调引擎</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E7%AC%A6%E5%8F%B7%E5%BC%95%E6%93%8E"><span class="toc-text">1.2 符号引擎</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E7%94%A8SMT2-Lib%E8%A1%A8%E7%A4%BA%E8%AF%AD%E4%B9%89"><span class="toc-text">1.3 用SMT2-Lib表示语义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-%E7%AC%A6%E5%8F%B7%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E6%8A%BD%E8%B1%A1%E8%AF%AD%E6%B3%95%E6%A0%91"><span class="toc-text">1.4 符号表达式的抽象语法树</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-O-LLVM"><span class="toc-text">2.O-LLVM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E7%A1%AE%E5%AE%9A%E6%95%B0%E6%8D%AE%E5%85%A5%E5%8F%A3%E7%82%B9"><span class="toc-text">2.1 确定数据入口点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E9%9A%94%E7%A6%BB%E7%9A%84%E8%BF%BD%E8%B8%AA"><span class="toc-text">2.2 隔离的追踪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E7%AC%A6%E5%8F%B7%E5%8C%96%E7%BA%A6%E6%9D%9F"><span class="toc-text">2.3 符号化约束</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%9B%BF%E6%8D%A2%E6%B7%B7%E6%B7%86%E5%88%86%E6%9E%90"><span class="toc-text">2.4 表达式替换混淆分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-%E6%8E%A7%E5%88%B6%E6%B5%81%E5%B9%B3%E5%9D%A6%E5%8C%96%E6%B7%B7%E6%B7%86%E5%88%86%E6%9E%90"><span class="toc-text">2.5  控制流平坦化混淆分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-%E8%99%9A%E5%81%87%E6%8E%A7%E5%88%B6%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text">2.6 虚假控制流分析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+ 
+  <script src="//github.elemecdn.com/leancloud-storage@3/dist/av-min.js"></script>
+  <script src='//github.elemecdn.com/valine@1.5.1/dist/Valine.min.js'></script>
+
+  <div id="vcomments"></div>
+
+  <script>
+    new Valine({
+      el: '#vcomments',
+      appId: 'bkevnbohTLs8IMTtlPQAE46E-gzGzoHsz',
+      appKey: 'WRvdsNxM9t5XI41zg0QrBmmX',
+      placeholder: '留个言吧~',
+      avatar: 'retro',
+      lang: 'zh'
+    })
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="Email" href="/about/">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="WeChat" href="/about/">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/bairePage/bairePage.github.io">Copyright © DiamondHunters 2023</a>
+        
+    </div>
+  
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %5C%5B%E7%BF%BB%E8%AF%91%5C%5D%20%E4%BD%BF%E7%94%A8Triton%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E6%B7%B7%E6%B7%86%E4%BB%A3%E7%A0%81%20(How%20Triton%20may%20help%20to%20analyse%20obfuscated%20binaries) + '&url=' + https%3A%2F%2Fbai.re%2F2023%2F04%2F26%2FTranslate-How-Triton-may-help-to-analyse-obfuscated-binaries%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
