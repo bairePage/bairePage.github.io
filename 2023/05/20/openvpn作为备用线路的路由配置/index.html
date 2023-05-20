@@ -11,7 +11,7 @@
   
   <title>
     
-      Archives 
+      openvpn作为备用线路的路由配置 
       
       
       |
@@ -105,111 +105,142 @@
 
 
       <div class="flex-container">
-        <!-- 归档页，展示本站所有文章，按照年份降序归类，url形式：https://yoursite/archives/ -->
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
 
-<!-- last: 按年份把文章分组，当前遍历到的年份 -->
-<!-- now: 当前遍历到的文章的发布年份 -->
+<!-- LaTex Display -->
+<script src="https://polyfill.alicdn.com/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
 
-<div class="container archives">
-  <div class="post-list">
-    
-        <!-- 后续文章的发布年份呈现 -->
-        <div class="content-title">
-          <h2>
-            <span>2023</span>
-          </h2>
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">openvpn作为备用线路的路由配置</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2023-05-20 16:35:36
+        </span>
+        
+      </div>
+      <div class="markdown-body">
+        <p><code>Openvpn</code>提供虚拟网卡连接到远程网络并且默认作为出口网卡，在windows上利用<code>Openvpn</code>作为备用出口较为复杂</p>
+<h3 id="一般方案"><a href="#一般方案" class="headerlink" title="一般方案"></a>一般方案</h3><p>网上提到的方式大多为使用 <code>route-nopull</code> 配置禁止远程下发路由数据，之后手动配置相应的路由表</p>
+<h4 id="缺陷"><a href="#缺陷" class="headerlink" title="缺陷"></a>缺陷</h4><p>该方法具有可行性，但需要在配置中手动加入指定路由信息</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">route x.x.0.0 255.255.0.0 vpn_gateway</span><br></pre></td></tr></table></figure>
+
+<h3 id="想实现的方案"><a href="#想实现的方案" class="headerlink" title="想实现的方案"></a>想实现的方案</h3><p>个人对该备用线路的需求是：手动绑定到该网卡或其他线路无法通联的情况下把虚拟网卡作为出口。</p>
+<p>例如 <code>curl --interface</code> 或使用<code>proxifier</code>指定出口网卡，亦可建立一个<code>sock5</code>代理绑定在虚拟网卡上</p>
+<h3 id="实现方法"><a href="#实现方法" class="headerlink" title="实现方法"></a>实现方法</h3><p>经了解<code>openvpn</code>创建了</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">128.0.0.0 128.0.0.0 </span><br><span class="line">0.0.0.0 128.0.0.0 </span><br></pre></td></tr></table></figure>
+
+<p>这两个网段的路由记录，而默认出口只有0.0.0.0/0的路有记录，<code>vpn</code>的前缀优先级高于默认网关，这使得流量会优先使用<code>VPN</code>作为出口且实现了全网段的路由</p>
+<p>我们可以照着该思路将0.0.0.0/0拆成4个网段添加路由使主线路的路由具有更高优先级，也可以为主路由同样添加0.0.0.0/1,128.0.0.0/1的路由记录并配置更低的跃点数。我这里选择方案2</p>
+<p>在配置中加入了</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">route-metric 150</span><br><span class="line">route 128.0.0.0 128.0.0.0 net_gateway</span><br><span class="line">route 0.0.0.0 128.0.0.0 net_gateway</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>route-metric</code>用以配置虚拟线路的跃点数。（同样可配置虚拟网卡的跃点数，防止自动跃点导致主路由总跃点数大于<code>VPN</code>路由）</p>
+<p>之后在主出口设备上为<code>IPV4</code>协议栈配置一个比虚拟网卡小的跃点数即可（网卡&amp;网关）。</p>
+<p>此时对外网的访问会有<code>net_gateway</code>与<code>vpn_gateway</code>两条路由，而<code>net_gateway</code>被我们配置了较小的跃点数，会作为出口。同时由于路由记录齐全，绑定在<code>VPN</code>虚拟网卡<code>IP</code>上的连接可以从虚拟网卡直接通过<code>VPN</code>访问外网。</p>
+<h4 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h4><p>由于跃点配置不具有强制性，别有用心的软件可以探测到出口<code>IP</code></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2023-05-20 16:35:36
+            </span>
+            
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
         </div>
       
-      <div class="post-item" title="openvpn作为备用线路的路由配置">
-        <div class="time-m-d">05-20</div>
-        <div class="title">
-          <a href="/2023/05/20/openvpn%E4%BD%9C%E4%B8%BA%E5%A4%87%E7%94%A8%E7%BA%BF%E8%B7%AF%E7%9A%84%E8%B7%AF%E7%94%B1%E9%85%8D%E7%BD%AE/">
-            <span>openvpn作为备用线路的路由配置</span>
-          </a>
-        </div>
-      </div>
+    </div>
     
-      <div class="post-item" title="[翻译] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries)">
-        <div class="time-m-d">04-26</div>
-        <div class="title">
-          <a href="/2023/04/26/Translate-How-Triton-may-help-to-analyse-obfuscated-binaries/">
-            <span>[翻译] 使用Triton框架分析混淆代码 (How Triton may help to analyse obfuscated binaries)</span>
-          </a>
-        </div>
-      </div>
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E8%88%AC%E6%96%B9%E6%A1%88"><span class="toc-text">一般方案</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E9%99%B7"><span class="toc-text">缺陷</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%83%B3%E5%AE%9E%E7%8E%B0%E7%9A%84%E6%96%B9%E6%A1%88"><span class="toc-text">想实现的方案</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95"><span class="toc-text">实现方法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9"><span class="toc-text">缺点</span></a></li></ol></li></ol>
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
     
-      <div class="post-item" title="在rock5b(armbian)上运行cuttlefish与redroid">
-        <div class="time-m-d">02-23</div>
-        <div class="title">
-          <a href="/2023/02/23/cuttlefish-and-redroid-on-rock5b/">
-            <span>在rock5b(armbian)上运行cuttlefish与redroid</span>
-          </a>
-        </div>
-      </div>
-    
-        <!-- 后续文章的发布年份呈现 -->
-        <div class="content-title">
-          <h2>
-            <span>2022</span>
-          </h2>
-        </div>
-      
-      <div class="post-item" title="使用AST还原某JS字符串混淆">
-        <div class="time-m-d">11-18</div>
-        <div class="title">
-          <a href="/2022/11/18/deobf-str-by-ast/">
-            <span>使用AST还原某JS字符串混淆</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="在VMware上安装MacOS 13(Ventura)">
-        <div class="time-m-d">11-14</div>
-        <div class="title">
-          <a href="/2022/11/14/macOS13-on-VMware/">
-            <span>在VMware上安装MacOS 13(Ventura)</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="typora-crack">
-        <div class="time-m-d">11-09</div>
-        <div class="title">
-          <a href="/2022/11/09/typora-crack/">
-            <span>typora-crack</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="2022-游戏安全竞赛-安卓客户端方向WP">
-        <div class="time-m-d">04-29</div>
-        <div class="title">
-          <a href="/2022/04/29/2022-gamesec-final-wp/">
-            <span>2022-游戏安全竞赛-安卓客户端方向WP</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="IDA中Names的类型及其图标">
-        <div class="time-m-d">01-17</div>
-        <div class="title">
-          <a href="/2022/01/17/IDA%E4%B8%ADNames%E7%9A%84%E7%B1%BB%E5%9E%8B%E5%8F%8A%E5%85%B6%E5%9B%BE%E6%A0%87/">
-            <span>IDA中Names的类型及其图标</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="Hello World">
-        <div class="time-m-d">01-16</div>
-        <div class="title">
-          <a href="/2022/01/16/hello-world/">
-            <span>Hello World</span>
-          </a>
-        </div>
+      <div class="comments-container">
+        
+
+
+
+
+ 
+  <script src="//github.elemecdn.com/leancloud-storage@3/dist/av-min.js"></script>
+  <script src='//github.elemecdn.com/valine@1.5.1/dist/Valine.min.js'></script>
+
+  <div id="vcomments"></div>
+
+  <script>
+    new Valine({
+      el: '#vcomments',
+      appId: 'bkevnbohTLs8IMTtlPQAE46E-gzGzoHsz',
+      appKey: 'WRvdsNxM9t5XI41zg0QrBmmX',
+      placeholder: '留个言吧~',
+      avatar: 'retro',
+      lang: 'zh'
+    })
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
       </div>
     
   </div>
-</div>
+
 
         <div class="footer">
   <div class="social">
@@ -472,6 +503,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + openvpn%E4%BD%9C%E4%B8%BA%E5%A4%87%E7%94%A8%E7%BA%BF%E8%B7%AF%E7%9A%84%E8%B7%AF%E7%94%B1%E9%85%8D%E7%BD%AE + '&url=' + https%3A%2F%2Fbai.re%2F2023%2F05%2F20%2Fopenvpn%25E4%25BD%259C%25E4%25B8%25BA%25E5%25A4%2587%25E7%2594%25A8%25E7%25BA%25BF%25E8%25B7%25AF%25E7%259A%2584%25E8%25B7%25AF%25E7%2594%25B1%25E9%2585%258D%25E7%25BD%25AE%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://bai.re/2023/05/20/openvpn%E4%BD%9C%E4%B8%BA%E5%A4%87%E7%94%A8%E7%BA%BF%E8%B7%AF%E7%9A%84%E8%B7%AF%E7%94%B1%E9%85%8D%E7%BD%AE/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/js/shares.js"></script>
